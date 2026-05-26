@@ -1,63 +1,72 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Newspaper } from "lucide-react";
-
-const newspaperByCountry = {
-  MX: { name: "Record", url: "https://www.record.com.mx" },
-  US: { name: "ESPN Soccer", url: "https://www.espn.com/soccer/" },
-  CA: { name: "The Athletic Canada", url: "https://theathletic.com" },
-  PA: { name: "RPC Deportes", url: "https://www.rpctv.com/deportes" },
-  HT: { name: "Haiti Tempo", url: "https://haititempo.com" },
-  CW: { name: "Curacao Chronicle Sports", url: "https://www.curacaochronicle.com" },
-  ES: { name: "Marca", url: "https://www.marca.com" },
-  FR: { name: "L'Equipe", url: "https://www.lequipe.fr" },
-  GB: { name: "BBC Sport", url: "https://www.bbc.com/sport/football" },
-  DE: { name: "Kicker", url: "https://www.kicker.de" },
-  PT: { name: "A Bola", url: "https://www.abola.pt" },
-  NL: { name: "Voetbal International", url: "https://www.vi.nl" },
-  IT: { name: "La Gazzetta", url: "https://www.gazzetta.it" },
-  BE: { name: "Sporza", url: "https://sporza.be" },
-  AR: { name: "Ole", url: "https://www.ole.com.ar" },
-  BR: { name: "Globo Esporte", url: "https://ge.globo.com" },
-  UY: { name: "Ovacion", url: "https://www.ovaciondigital.com.uy" },
-  CO: { name: "Win Sports", url: "https://www.winsports.co" },
-  JP: { name: "Nikkan Sports", url: "https://www.nikkansports.com" },
-  KR: { name: "Sports Chosun", url: "https://sports.chosun.com" },
-  AU: { name: "The Roar", url: "https://www.theroar.com.au" },
-  NZ: { name: "Stuff Sport", url: "https://www.stuff.co.nz/sport" }
-};
-
-const defaultNews = { name: "UEFA Official", url: "https://www.uefa.com" };
+import { getNewsSource } from "../data/newsSources.js";
 
 export default function NewspaperDropdown({ country }) {
-  const [open, setOpen] = useState(false);
-  const selected = useMemo(() => newspaperByCountry[country] || defaultNews, [country]);
+  const selected = useMemo(() => getNewsSource(country), [country]);
+  const stories = selected.stories;
+  const tickerStories = useMemo(() => [...stories, ...stories, ...stories], [stories]);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [country]);
+
+  useEffect(() => {
+    if (stories.length < 2) return undefined;
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % stories.length);
+    }, 3800);
+    return () => window.clearInterval(intervalId);
+  }, [stories.length]);
+
+  const activeStory = stories[activeIndex] || stories[0];
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        className="flex h-10 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm"
-        onClick={() => setOpen((prev) => !prev)}
-        title="Diario deportivo"
+    <section className="grid h-12 min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-white/30 bg-white/95 text-slate-950 shadow-sm backdrop-blur sm:max-w-4xl">
+      <a
+        className="row-span-2 flex shrink-0 items-center gap-2 border-r border-slate-200 px-3 text-xs font-black uppercase text-brandBlue hover:bg-slate-50"
+        href={selected.url}
+        target="_blank"
+        rel="noreferrer"
+        title={`Fuente: ${selected.source}`}
       >
-        <Newspaper size={18} />
-        <span>{selected.name}</span>
-      </button>
-      {open && (
-        <div className="absolute left-0 z-20 mt-2 w-72 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
-          <a
-            className="block rounded px-3 py-2 text-sm font-medium text-brandBlue hover:bg-slate-100"
-            href={selected.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Abrir portada: {selected.name}
-          </a>
-          <p className="px-3 py-2 text-xs text-slate-500">
-            Fuente recomendada segun pais seleccionado.
-          </p>
+        <Newspaper size={16} />
+        <span className="hidden sm:inline">{selected.source}</span>
+      </a>
+
+      <a
+        href={activeStory.url}
+        target="_blank"
+        rel="noreferrer"
+        className="flex min-w-0 items-center gap-2 border-b border-slate-100 px-3 text-xs font-black text-slate-950 hover:text-brandBlue sm:text-sm"
+      >
+        <span className="shrink-0 rounded-full bg-brandBlue px-2 py-0.5 text-[10px] font-black uppercase text-white">
+          {selected.country}
+        </span>
+        <span className="truncate">{activeStory.title}</span>
+        <span className="hidden shrink-0 text-[11px] font-bold text-slate-400 md:inline">
+          Fuente: {selected.source}
+        </span>
+      </a>
+
+      <div className="news-marquee-viewport relative min-w-0 overflow-hidden">
+        <div className="news-marquee-track flex h-full w-max items-center gap-7 whitespace-nowrap px-3 text-[11px] font-bold sm:text-xs">
+          {tickerStories.map((story, index) => (
+            <a
+              key={`${story.url}-${index}`}
+              href={story.url}
+              target="_blank"
+              rel="noreferrer"
+              className="relative z-10 inline-flex items-center gap-2 text-slate-700 hover:text-brandBlue"
+            >
+              <span className="text-brandRed">Ultima hora</span>
+              <span>{story.title}</span>
+              <span className="text-slate-400">Fuente: {selected.source}</span>
+            </a>
+          ))}
         </div>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }

@@ -12,3 +12,25 @@
     @apply text-slate-900;
   }
 }
+
+@keyframes news-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-33.333%, 0, 0);
+  }
+}
+
+.news-marquee-viewport {
+  mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+}
+
+.news-marquee-track {
+  animation: news-marquee 16s linear infinite;
+  will-change: transform;
+}
+
+.news-marquee-track:hover {
+  animation-play-state: paused;
+}

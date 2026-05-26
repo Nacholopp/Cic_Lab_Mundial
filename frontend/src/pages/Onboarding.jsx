@@ -5,6 +5,7 @@ import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
+import { newsCountryOptions } from "../data/newsSources.js";
 import { featuredTeams, heroImage } from "../data/worldCupVisuals.js";
 
 const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
@@ -243,12 +244,11 @@ export default function Onboarding() {
               value={form.country}
               onChange={updateField}
             >
-              <option value="ES">Espana</option>
-              <option value="US">USA</option>
-              <option value="MX">Mexico</option>
-              <option value="CA">Canada</option>
-              <option value="AR">Argentina</option>
-              <option value="BR">Brasil</option>
+              {newsCountryOptions.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {item.label} - {item.region}
+                </option>
+              ))}
             </select>
           </label>
           <fieldset>

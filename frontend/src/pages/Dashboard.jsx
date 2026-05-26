@@ -11,7 +11,7 @@ import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 import { fetchCurrentTime } from "../services/api.client.js";
-import { fanImage, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
+import { fanImage, fifa26Logo, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
 
 const matchTitles = {
   stay_origin: "Horarios para ver en tu ciudad",
@@ -48,7 +48,16 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/65 to-transparent" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-16">
-          <header className="flex items-center justify-between">
+          <header className="relative z-10 flex items-center justify-between gap-3">
+            <a
+              href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/20 sm:h-20 sm:w-16"
+              title="FIFA World Cup 26"
+            >
+              <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
+            </a>
             <NewspaperDropdown country={country} />
             <ProfileDropdown profile={profile} />
           </header>

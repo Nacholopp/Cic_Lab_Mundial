@@ -7,6 +7,9 @@ export const stadiumImage =
 export const fanImage =
   "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&w=1600&q=85";
 
+export const fifa26Logo =
+  "https://upload.wikimedia.org/wikipedia/commons/1/17/2026_FIFA_World_Cup_emblem.svg";
+
 export const featuredTeams = [
   {
     name: "Espana",
