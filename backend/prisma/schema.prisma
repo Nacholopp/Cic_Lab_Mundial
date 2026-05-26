@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile   Profile?
+}
+
+model Profile {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  favoriteTeam   String
+  originCity     String
+  nearestAirport String?
+  budget         Float?
+  startDate      DateTime?
+  endDate        DateTime?
+  flexibility    Int?      @default(2)
+  travelers      Int       @default(1)
+  age            Int?
+  hasDrivingId   Boolean   @default(false)
+  preferences    String[]
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Match {
+  id         String   @id
+  homeTeam   String
+  awayTeam   String
+  venue      String?
+  city       String?
+  date       DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model City {
+  id         String   @id @default(cuid())
+  name       String
+  country    String
+  iataCode   String?  @unique
+  createdAt  DateTime @default(now())
+}
+
+model Itinerary {
+  id            String   @id @default(cuid())
+  userId        String
+  originCity    String
+  destination   String
+  departureDate DateTime
+  totalCost     Float?
+  createdAt     DateTime @default(now())
+}
+
+model Flight {
+  id              String   @id @default(cuid())
+  itineraryId     String?
+  offerExternalId String?
+  originIata      String
+  destinationIata String
+  price           Float
+  currency        String
+  durationMinutes Int
+  stops           Int
+  departureDate   DateTime
+  createdAt       DateTime @default(now())
+}
+
+model Hotel {
+  id          String   @id @default(cuid())
+  itineraryId String?
+  name        String
+  city        String
+  priceNight  Float?
+  createdAt   DateTime @default(now())
+}
+
+model CarRental {
+  id          String   @id @default(cuid())
+  itineraryId String?
+  company     String
+  city        String
+  dailyPrice  Float?
+  createdAt   DateTime @default(now())
+}
