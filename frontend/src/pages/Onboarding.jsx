@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
+import AirportPicker from "../components/AirportPicker.jsx";
 import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import NewsMagazine from "../components/NewsMagazine.jsx";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
@@ -11,6 +12,20 @@ import { newsCountryOptions } from "../data/newsSources.js";
 import { fifa26Logo, heroImage } from "../data/worldCupVisuals.js";
 
 const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
+const budgetRanges = [
+  { label: "Sin limite", value: "" },
+  { label: "Hasta 500 USD/persona", value: "500" },
+  { label: "500 - 1.000 USD/persona", value: "1000" },
+  { label: "1.000 - 1.500 USD/persona", value: "1500" },
+  { label: "1.500 - 2.500 USD/persona", value: "2500" },
+  { label: "Mas de 2.500 USD/persona", value: "5000" }
+];
+const cabinOptions = [
+  { label: "Economy", value: "economy" },
+  { label: "Premium economy", value: "premium_economy" },
+  { label: "Business", value: "business" },
+  { label: "First", value: "first" }
+];
 const flowOptions = [
   {
     value: "stay_origin",
@@ -44,6 +59,10 @@ export default function Onboarding() {
     originCity: profile?.originCity || "",
     destinationCity: profile?.requestedDestinationCity || profile?.destinationCity || "Dallas",
     budget: profile?.budget ? String(profile.budget / (profile.adults || 1)) : "",
+    originAirport: profile?.originAirport || null,
+    destinationAirport: profile?.destinationAirport || null,
+    cabinClass: profile?.cabinClass || "economy",
+    maxStops: profile?.maxStops ?? 1,
     departureDate: profile?.departureDate || "",
     adults: profile?.adults || 1,
     country: "ES",
@@ -92,6 +111,10 @@ export default function Onboarding() {
         originCoordinates: null,
         budgetPerPerson,
         budget: budgetPerPerson == null ? null : budgetPerPerson * adults,
+        originAirport: form.mode === "stay_origin" ? null : form.originAirport,
+        destinationAirport: form.mode === "travel_city" ? form.destinationAirport : null,
+        cabinClass: form.cabinClass,
+        maxStops: Number(form.maxStops),
         preferences: form.preferences
       };
       const response = await buildPlan(payload);
@@ -201,14 +224,42 @@ export default function Onboarding() {
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
               name="originCity"
               value={form.originCity}
-              onChange={updateField}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  originCity: event.target.value,
+                  originAirport: null
+                }))
+              }
               required
             />
           </label>
+          {form.mode !== "stay_origin" && (
+            <AirportPicker
+              city={form.originCity}
+              label="Aeropuerto de origen"
+              value={form.originAirport}
+              onChange={(originAirport) => setForm((prev) => ({ ...prev, originAirport }))}
+            />
+          )}
           {form.mode === "travel_city" && (
             <HostVenueSelect
               value={form.destinationCity}
-              onChange={(destinationCity) => setForm((prev) => ({ ...prev, destinationCity }))}
+              onChange={(destinationCity) =>
+                setForm((prev) => ({
+                  ...prev,
+                  destinationCity,
+                  destinationAirport: null
+                }))
+              }
+            />
+          )}
+          {form.mode === "travel_city" && (
+            <AirportPicker
+              city={form.destinationCity}
+              label="Aeropuerto de destino"
+              value={form.destinationAirport}
+              onChange={(destinationAirport) => setForm((prev) => ({ ...prev, destinationAirport }))}
             />
           )}
           {form.mode === "stay_origin" && (
@@ -231,15 +282,19 @@ export default function Onboarding() {
           )}
           <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">
-            Presupuesto por persona (USD)
-            <input
-              type="number"
-              min="0"
+            Presupuesto por persona
+            <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
               name="budget"
               value={form.budget}
               onChange={updateField}
-            />
+            >
+              {budgetRanges.map((range) => (
+                <option key={range.label} value={range.value}>
+                  {range.label}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="text-sm font-bold">
             Personas
@@ -253,6 +308,38 @@ export default function Onboarding() {
             />
           </label>
           </div>
+          {form.mode !== "stay_origin" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-bold">
+                Clase de cabina
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                  name="cabinClass"
+                  value={form.cabinClass}
+                  onChange={updateField}
+                >
+                  {cabinOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-sm font-bold">
+                Escalas maximas
+                <select
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                  name="maxStops"
+                  value={form.maxStops}
+                  onChange={updateField}
+                >
+                  <option value="0">Directo</option>
+                  <option value="1">Hasta 1 escala</option>
+                  <option value="2">Hasta 2 escalas</option>
+                </select>
+              </label>
+            </div>
+          )}
           <label className="text-sm font-bold">
             Pais para periodico
             <select

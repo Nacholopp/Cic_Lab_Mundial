@@ -23,6 +23,10 @@ export function buildPlan(body) {
   });
 }
 
+export function fetchAirports(city) {
+  return request(`/flights/airports?city=${encodeURIComponent(city)}`);
+}
+
 export function fetchMatches() {
   return request("/matches");
 }

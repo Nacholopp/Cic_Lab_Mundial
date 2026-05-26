@@ -12,13 +12,16 @@ function numberFromEnv(value, fallback) {
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: numberFromEnv(process.env.PORT, 4000),
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
+  corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:5173,http://127.0.0.1:5173")
+    .split(",")
+    .map((origin) => origin.trim()),
   databaseUrl: process.env.DATABASE_URL || "",
   redisUrl: process.env.REDIS_URL || "",
   jwtSecret: process.env.JWT_SECRET || "replace_me",
-  amadeusClientId: process.env.AMADEUS_CLIENT_ID || "",
-  amadeusClientSecret: process.env.AMADEUS_CLIENT_SECRET || "",
-  amadeusBaseUrl: process.env.AMADEUS_BASE_URL || "https://test.api.amadeus.com",
+  ignavApiKey: process.env.IGNAV_API_KEY || "",
+  ignavBaseUrl: process.env.IGNAV_BASE_URL || "https://ignav.com/api",
+  airportsDataUrl:
+    process.env.AIRPORTS_DATA_URL || "https://raw.githubusercontent.com/mwgg/Airports/master/airports.json",
   sportsDbApiKey: process.env.THESPORTSDB_API_KEY || "3",
   sportsDbBaseUrl:
     process.env.THESPORTSDB_BASE_URL || "https://www.thesportsdb.com/api/v1/json",

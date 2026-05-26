@@ -1,4 +1,4 @@
-import { getFlexibleFlightOffers } from "../services/amadeus.service.js";
+import { getFlexibleFlightOffers } from "../services/ignav.service.js";
 import { rankFlights, buildItinerary, explainRecommendation } from "../services/recommendation.service.js";
 import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
@@ -37,7 +37,11 @@ export async function buildTravelPlan(req, res) {
     adults = 1,
     preferences = [],
     budget = null,
-    originCoordinates = null
+    originCoordinates = null,
+    originAirport = null,
+    destinationAirport = null,
+    cabinClass = "economy",
+    maxStops = 1
   } = req.body || {};
 
   if (!originCity) {
@@ -82,7 +86,11 @@ export async function buildTravelPlan(req, res) {
         originCity,
         destinationCity: effectiveDestinationCity,
         departureDate,
-        adults
+        adults,
+        originAirport,
+        destinationAirport,
+        cabinClass,
+        maxStops
       });
       originIata = flightSearch.originIata;
       destinationIata = flightSearch.destinationIata;
@@ -131,7 +139,12 @@ export async function buildTravelPlan(req, res) {
       departureDate,
       adults,
       preferences,
-      budget
+      budget,
+      budgetPerPerson: req.body?.budgetPerPerson ?? null,
+      originAirport,
+      destinationAirport,
+      cabinClass,
+      maxStops
     },
     matchPlan,
     watchSpots,
