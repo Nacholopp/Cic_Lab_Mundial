@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { CalendarDays, CloudSun, Map, Trophy, X } from "lucide-react";
+import { CalendarDays, CloudSun, Map, MapPin, Trophy, Tv, X } from "lucide-react";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import WorldMap from "../components/WorldMap.jsx";
@@ -14,7 +14,7 @@ import { fetchCurrentTime } from "../services/api.client.js";
 import { fanImage, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
 
 const matchTitles = {
-  stay_origin: "Partidos en tu ciudad o sede cercana",
+  stay_origin: "Horarios para ver en tu ciudad",
   travel_city: "Partidos en la ciudad elegida",
   follow_team: "Partidos de tu seleccion"
 };
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { plan, profile, country } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
+  const isLocalPlan = profile.mode === "stay_origin";
 
   useEffect(() => {
     let active = true;
@@ -61,8 +62,9 @@ export default function Dashboard() {
               Tu viaje al Mundial con energia de final.
             </h1>
             <p className="mt-4 max-w-2xl text-base font-medium text-white/85 sm:text-lg">
-              {profile.favoriteTeam} desde {profile.originCity} hacia {profile.destinationCity}, con vuelos,
-              ruta, clima y contexto de selecciones en una sola vista.
+              {isLocalPlan
+                ? `Partidos, horarios y sitios para ver el Mundial en ${profile.originCity}.`
+                : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${profile.destinationCity}, con vuelos, ruta, clima y contexto de selecciones en una sola vista.`}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -94,8 +96,8 @@ export default function Dashboard() {
             <p className="mt-1 text-2xl font-black">{profile.favoriteTeam}</p>
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
-            <p className="text-xs font-bold uppercase text-slate-500">Destino</p>
-            <p className="mt-1 text-2xl font-black">{profile.destinationCity}</p>
+            <p className="text-xs font-bold uppercase text-slate-500">{isLocalPlan ? "Ciudad" : "Destino"}</p>
+            <p className="mt-1 text-2xl font-black">{isLocalPlan ? profile.originCity : profile.destinationCity}</p>
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Presupuesto</p>
@@ -168,11 +170,35 @@ export default function Dashboard() {
           />
         </section>
 
-        <section className="mt-4 grid gap-4 md:grid-cols-3">
-          <FlightCard label="Mas barato" flight={plan.flights.cheapest} />
-          <FlightCard label="Mas rapido" flight={plan.flights.fastest} />
-          <FlightCard label="Recomendado" flight={plan.flights.recommended} />
-        </section>
+        {isLocalPlan && (
+          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Tv size={19} className="text-brandRed" />
+              <h2 className="text-lg font-black">Sitios para verlo en tu ciudad</h2>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              {(plan.watchSpots || []).map((spot) => (
+                <article key={spot.name} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-sm font-black text-slate-950">{spot.name}</p>
+                  <p className="mt-1 text-xs font-bold uppercase text-brandRed">{spot.type}</p>
+                  <p className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-slate-600">
+                    <MapPin size={15} />
+                    {spot.area}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-600">{spot.note}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {!isLocalPlan && (
+          <section className="mt-4 grid gap-4 md:grid-cols-3">
+            <FlightCard label="Mas barato" flight={plan.flights.cheapest} />
+            <FlightCard label="Mas rapido" flight={plan.flights.fastest} />
+            <FlightCard label="Recomendado" flight={plan.flights.recommended} />
+          </section>
+        )}
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Timeline items={plan.itinerary} />

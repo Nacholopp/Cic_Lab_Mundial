@@ -4,6 +4,29 @@ import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
 
+function buildWatchSpots(city) {
+  return [
+    {
+      name: `Fan zone de ${city}`,
+      type: "Pantalla gigante",
+      area: "Zona centro",
+      note: "Ideal para ver partidos principales con ambiente de torneo."
+    },
+    {
+      name: `Sports bar internacional`,
+      type: "Bar deportivo",
+      area: city,
+      note: "Buena opcion para partidos simultaneos y horarios nocturnos."
+    },
+    {
+      name: `Punto de encuentro de aficionados`,
+      type: "Quedada local",
+      area: city,
+      note: "Recomendado para seguir a tu seleccion con otros fans."
+    }
+  ];
+}
+
 export async function buildTravelPlan(req, res) {
   const {
     mode = "travel_city",
@@ -17,11 +40,15 @@ export async function buildTravelPlan(req, res) {
     originCoordinates = null
   } = req.body || {};
 
-  if (!originCity || !departureDate) {
+  if (!originCity) {
     return res.status(400).json({
       ok: false,
-      error: "originCity and departureDate are required"
+      error: "originCity is required"
     });
+  }
+
+  if (mode !== "stay_origin" && !departureDate) {
+    return res.status(400).json({ ok: false, error: "departureDate is required for travel modes" });
   }
 
   if (mode === "travel_city" && !destinationCity) {
@@ -49,7 +76,7 @@ export async function buildTravelPlan(req, res) {
   let offers = [];
   let flightError = null;
 
-  if (originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
+  if (mode !== "stay_origin" && originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
     try {
       const flightSearch = await getFlexibleFlightOffers({
         originCity,
@@ -83,6 +110,7 @@ export async function buildTravelPlan(req, res) {
 
   const recommendedPrice = rankedFlights.recommended?.price || 0;
   const estimatedTotalCost = recommendedPrice * adults;
+  const watchSpots = mode === "stay_origin" ? buildWatchSpots(originCity) : [];
   const budgetStatus =
     budget == null
       ? "no_budget_provided"
@@ -106,6 +134,7 @@ export async function buildTravelPlan(req, res) {
       budget
     },
     matchPlan,
+    watchSpots,
     flights: rankedFlights,
     flightError,
     matches: relevantMatches,

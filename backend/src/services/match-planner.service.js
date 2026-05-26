@@ -146,14 +146,10 @@ export function buildMatchPlan({
     selectedCity = canonicalCityName(originCity);
     exactMatches = sourceMatches.filter((match) => cityMatches(match, selectedCity));
     if (!exactMatches.length) {
-      const nearestCity = findNearestHostCity(originCity, originCoordinates);
-      selectedCity = nearestCity.name;
-      exactMatches = sourceMatches.filter((match) => cityMatches(match, nearestCity.name));
       notice = {
-        type: "nearest_city",
-        title: "No hay partidos asignados en tu ciudad de origen",
-        message: `Te mostramos ${nearestCity.name}, la sede mas cercana disponible.`,
-        nearestCity
+        type: "local_watch_plan",
+        title: "No hay partidos asignados en tu ciudad",
+        message: "Te mostramos horarios destacados del Mundial para verlos en tu ciudad."
       };
     }
   }

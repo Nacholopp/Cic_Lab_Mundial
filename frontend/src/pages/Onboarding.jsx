@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
+import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
-import { featuredTeams, heroImage, hostCities } from "../data/worldCupVisuals.js";
+import { featuredTeams, heroImage } from "../data/worldCupVisuals.js";
 
 const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
 const flowOptions = [
@@ -28,21 +29,6 @@ const flowOptions = [
   }
 ];
 
-function getBrowserCoordinates() {
-  if (!navigator.geolocation) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (position) =>
-        resolve({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude
-        }),
-      () => resolve(null),
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
-    );
-  });
-}
-
 export default function Onboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -63,10 +49,11 @@ export default function Onboarding() {
 
   const canSubmit = useMemo(
     () => {
-      const baseReady = Boolean(form.originCity && form.departureDate && form.adults);
-      if (form.mode === "travel_city") return baseReady && Boolean(form.destinationCity);
-      if (form.mode === "follow_team") return baseReady && Boolean(form.favoriteTeam);
-      return baseReady;
+      const baseReady = Boolean(form.originCity && form.adults);
+      if (form.mode === "stay_origin") return baseReady;
+      if (form.mode === "travel_city") return baseReady && Boolean(form.destinationCity && form.departureDate);
+      if (form.mode === "follow_team") return baseReady && Boolean(form.favoriteTeam && form.departureDate);
+      return false;
     },
     [form]
   );
@@ -92,15 +79,14 @@ export default function Onboarding() {
     try {
       setLoading(true);
       setError(null);
-      const originCoordinates = form.mode === "stay_origin" ? await getBrowserCoordinates() : null;
       const payload = {
         mode: form.mode,
         favoriteTeam: form.favoriteTeam,
         originCity: form.originCity,
-        destinationCity: form.mode === "stay_origin" ? form.originCity : form.destinationCity,
-        departureDate: form.departureDate,
+        destinationCity: form.mode === "travel_city" ? form.destinationCity : null,
+        departureDate: form.mode === "stay_origin" ? null : form.departureDate,
         adults,
-        originCoordinates,
+        originCoordinates: null,
         budgetPerPerson,
         budget: budgetPerPerson == null ? null : budgetPerPerson * adults,
         preferences: form.preferences
@@ -202,39 +188,29 @@ export default function Onboarding() {
             />
           </label>
           {form.mode === "travel_city" && (
-            <label className="text-sm font-bold">
-              Ciudad destino
-              <select
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
-                name="destinationCity"
-                value={form.destinationCity}
-                onChange={updateField}
-                required
-              >
-                {hostCities.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <HostVenueSelect
+              value={form.destinationCity}
+              onChange={(destinationCity) => setForm((prev) => ({ ...prev, destinationCity }))}
+            />
           )}
           {form.mode === "stay_origin" && (
             <p className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
-              Usaremos tu ciudad de origen. Si no tiene partidos, buscaremos la sede mas cercana y te mostraremos la distancia.
+              Usaremos tu ciudad de origen para proponerte horarios de partidos y sitios donde verlos. No necesitas fecha de salida.
             </p>
           )}
-          <label className="text-sm font-bold">
-            Fecha de salida
-            <input
-              type="date"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
-              name="departureDate"
-              value={form.departureDate}
-              onChange={updateField}
-              required
-            />
-          </label>
+          {form.mode !== "stay_origin" && (
+            <label className="text-sm font-bold">
+              Fecha de salida
+              <input
+                type="date"
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                name="departureDate"
+                value={form.departureDate}
+                onChange={updateField}
+                required
+              />
+            </label>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">
             Presupuesto por persona (USD)
