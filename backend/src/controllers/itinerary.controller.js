@@ -1,49 +1,73 @@
 import { getFlexibleFlightOffers } from "../services/amadeus.service.js";
 import { rankFlights, buildItinerary, explainRecommendation } from "../services/recommendation.service.js";
+import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
 
-function teamMatchFilter(matches, favoriteTeam) {
-  if (!favoriteTeam) return matches;
-  const target = favoriteTeam.toLowerCase();
-  const filtered = matches.filter(
-    (item) =>
-      item.homeTeam?.toLowerCase().includes(target) || item.awayTeam?.toLowerCase().includes(target)
-  );
-  return filtered.length ? filtered : matches;
-}
-
 export async function buildTravelPlan(req, res) {
   const {
+    mode = "travel_city",
     favoriteTeam,
     originCity,
     destinationCity,
     departureDate,
     adults = 1,
     preferences = [],
-    budget = null
+    budget = null,
+    originCoordinates = null
   } = req.body || {};
 
-  if (!favoriteTeam || !originCity || !destinationCity || !departureDate) {
+  if (!originCity || !departureDate) {
     return res.status(400).json({
       ok: false,
-      error: "favoriteTeam, originCity, destinationCity and departureDate are required"
+      error: "originCity and departureDate are required"
     });
   }
 
-  const [{ originIata, destinationIata, offers }, matches] = await Promise.all([
-    getFlexibleFlightOffers({
-      originCity,
-      destinationCity,
-      departureDate,
-      adults
-    }),
-    getUpcomingMatches()
-  ]);
+  if (mode === "travel_city" && !destinationCity) {
+    return res.status(400).json({ ok: false, error: "destinationCity is required for travel_city mode" });
+  }
+
+  if (mode === "follow_team" && !favoriteTeam) {
+    return res.status(400).json({ ok: false, error: "favoriteTeam is required for follow_team mode" });
+  }
+
+  const matches = await getUpcomingMatches();
+  const matchPlan = buildMatchPlan({
+    matches,
+    mode,
+    originCity,
+    destinationCity,
+    favoriteTeam,
+    departureDate,
+    originCoordinates
+  });
+
+  const effectiveDestinationCity = matchPlan.selectedCity || destinationCity || originCity;
+  let originIata = null;
+  let destinationIata = null;
+  let offers = [];
+  let flightError = null;
+
+  if (originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
+    try {
+      const flightSearch = await getFlexibleFlightOffers({
+        originCity,
+        destinationCity: effectiveDestinationCity,
+        departureDate,
+        adults
+      });
+      originIata = flightSearch.originIata;
+      destinationIata = flightSearch.destinationIata;
+      offers = flightSearch.offers;
+    } catch (error) {
+      flightError = error.message;
+    }
+  }
 
   const rankedFlights = rankFlights(offers, preferences);
-  const relevantMatches = teamMatchFilter(matches, favoriteTeam).slice(0, 10);
-  const itinerary = buildItinerary(relevantMatches, originCity, destinationCity);
+  const relevantMatches = matchPlan.hasExactMatches ? matchPlan.matches : matchPlan.alternatives;
+  const itinerary = buildItinerary(relevantMatches, originCity, effectiveDestinationCity, mode);
   const recommendationText = explainRecommendation({
     preferences,
     recommended: rankedFlights.recommended
@@ -52,7 +76,7 @@ export async function buildTravelPlan(req, res) {
   let weather = null;
   let weatherError = null;
   try {
-    weather = await getWeatherByCity(destinationCity);
+    weather = await getWeatherByCity(effectiveDestinationCity);
   } catch (error) {
     weatherError = error.message;
   }
@@ -69,9 +93,11 @@ export async function buildTravelPlan(req, res) {
   res.json({
     ok: true,
     profile: {
+      mode,
       favoriteTeam,
       originCity,
-      destinationCity,
+      destinationCity: effectiveDestinationCity,
+      requestedDestinationCity: destinationCity,
       originIata,
       destinationIata,
       departureDate,
@@ -79,7 +105,9 @@ export async function buildTravelPlan(req, res) {
       preferences,
       budget
     },
+    matchPlan,
     flights: rankedFlights,
+    flightError,
     matches: relevantMatches,
     itinerary,
     recommendationText,

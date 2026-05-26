@@ -1,33 +1,73 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowRight, Flag, Plane, Trophy, Users } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
-import { featuredTeams, heroImage } from "../data/worldCupVisuals.js";
+import { featuredTeams, heroImage, hostCities } from "../data/worldCupVisuals.js";
 
 const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
+const flowOptions = [
+  {
+    value: "stay_origin",
+    label: "Me quedo en mi ciudad",
+    icon: Home,
+    description: "Muestra todos los partidos de tu ciudad o la sede mas cercana."
+  },
+  {
+    value: "travel_city",
+    label: "Quiero viajar a una sede",
+    icon: MapPinned,
+    description: "Elige una ciudad concreta y consulta sus partidos, horarios y estadios."
+  },
+  {
+    value: "follow_team",
+    label: "Seguir a mi seleccion",
+    icon: Shield,
+    description: "Busca todos los partidos disponibles de esa seleccion."
+  }
+];
+
+function getBrowserCoordinates() {
+  if (!navigator.geolocation) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) =>
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+    );
+  });
+}
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { setProfile, setPlan, setError, setLoading, loading, error, setCountry } = usePlannerStore();
+  const [searchParams] = useSearchParams();
+  const { profile, setProfile, setPlan, setError, setLoading, loading, error, setCountry } = usePlannerStore();
+  const initialMode = searchParams.get("mode") || profile?.mode || "travel_city";
 
   const [form, setForm] = useState({
-    favoriteTeam: "",
-    originCity: "",
-    destinationCity: "Dallas",
-    budget: "",
-    departureDate: "",
-    adults: 1,
+    mode: initialMode,
+    favoriteTeam: profile?.favoriteTeam || "",
+    originCity: profile?.originCity || "",
+    destinationCity: profile?.requestedDestinationCity || profile?.destinationCity || "Dallas",
+    budget: profile?.budget ? String(profile.budget / (profile.adults || 1)) : "",
+    departureDate: profile?.departureDate || "",
+    adults: profile?.adults || 1,
     country: "ES",
-    preferences: ["barato", "futbol"]
+    preferences: profile?.preferences || ["barato", "futbol"]
   });
 
   const canSubmit = useMemo(
-    () =>
-      Boolean(
-        form.favoriteTeam && form.originCity && form.destinationCity && form.departureDate && form.adults
-      ),
+    () => {
+      const baseReady = Boolean(form.originCity && form.departureDate && form.adults);
+      if (form.mode === "travel_city") return baseReady && Boolean(form.destinationCity);
+      if (form.mode === "follow_team") return baseReady && Boolean(form.favoriteTeam);
+      return baseReady;
+    },
     [form]
   );
 
@@ -52,12 +92,15 @@ export default function Onboarding() {
     try {
       setLoading(true);
       setError(null);
+      const originCoordinates = form.mode === "stay_origin" ? await getBrowserCoordinates() : null;
       const payload = {
+        mode: form.mode,
         favoriteTeam: form.favoriteTeam,
         originCity: form.originCity,
-        destinationCity: form.destinationCity,
+        destinationCity: form.mode === "stay_origin" ? form.originCity : form.destinationCity,
         departureDate: form.departureDate,
         adults,
+        originCoordinates,
         budgetPerPerson,
         budget: budgetPerPerson == null ? null : budgetPerPerson * adults,
         preferences: form.preferences
@@ -113,12 +156,41 @@ export default function Onboarding() {
 
           <form className="rounded-lg border border-white/30 bg-white p-5 text-slate-950 shadow-2xl" onSubmit={submit}>
             <h2 className="text-xl font-black">Crea tu plan</h2>
-            <p className="mt-1 text-sm text-slate-600">Elige equipo, origen y destino mundialista.</p>
+            <p className="mt-1 text-sm text-slate-600">Elige como quieres vivir el Mundial y cambia de opcion cuando quieras.</p>
             <div className="mt-5 grid gap-4">
-              <TeamCountrySelect
-                value={form.favoriteTeam}
-                onChange={(favoriteTeam) => setForm((prev) => ({ ...prev, favoriteTeam }))}
-              />
+              <fieldset>
+                <legend className="text-sm font-bold">Tipo de plan</legend>
+                <div className="mt-2 grid gap-2">
+                  {flowOptions.map((option) => {
+                    const Icon = option.icon;
+                    const selected = form.mode === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`flex min-h-16 items-start gap-3 rounded-md border p-3 text-left transition ${
+                          selected
+                            ? "border-brandBlue bg-blue-50 text-slate-950 ring-2 ring-brandBlue/15"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-brandBlue/60"
+                        }`}
+                        onClick={() => setForm((prev) => ({ ...prev, mode: option.value }))}
+                      >
+                        <Icon className={selected ? "text-brandBlue" : "text-slate-500"} size={20} />
+                        <span>
+                          <span className="block text-sm font-black">{option.label}</span>
+                          <span className="mt-1 block text-xs font-medium text-slate-500">{option.description}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              {form.mode === "follow_team" && (
+                <TeamCountrySelect
+                  value={form.favoriteTeam}
+                  onChange={(favoriteTeam) => setForm((prev) => ({ ...prev, favoriteTeam }))}
+                />
+              )}
           <label className="text-sm font-bold">
             Ciudad origen
             <input
@@ -129,16 +201,29 @@ export default function Onboarding() {
               required
             />
           </label>
-          <label className="text-sm font-bold">
-            Ciudad destino
-            <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
-              name="destinationCity"
-              value={form.destinationCity}
-              onChange={updateField}
-              required
-            />
-          </label>
+          {form.mode === "travel_city" && (
+            <label className="text-sm font-bold">
+              Ciudad destino
+              <select
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                name="destinationCity"
+                value={form.destinationCity}
+                onChange={updateField}
+                required
+              >
+                {hostCities.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {form.mode === "stay_origin" && (
+            <p className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
+              Usaremos tu ciudad de origen. Si no tiene partidos, buscaremos la sede mas cercana y te mostraremos la distancia.
+            </p>
+          )}
           <label className="text-sm font-bold">
             Fecha de salida
             <input
@@ -219,6 +304,7 @@ export default function Onboarding() {
             disabled={!canSubmit || loading}
             className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brandBlue px-4 text-sm font-black text-white transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
+            {profile && <ArrowLeft size={18} />}
             {loading ? "Generando plan..." : "Generar plan"}
             {!loading && <ArrowRight size={18} />}
           </button>

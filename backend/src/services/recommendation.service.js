@@ -58,22 +58,24 @@ export function rankFlights(offers, preferences) {
   };
 }
 
-export function buildItinerary(matches, originCity, destinationCity) {
-  const selectedMatches = (matches || []).slice(0, 3);
+export function buildItinerary(matches, originCity, destinationCity, mode = "travel_city") {
+  const selectedMatches = (matches || []).slice(0, 6);
   return selectedMatches.map((match, index) => ({
     day: index + 1,
     date: match.date,
     location: match.city || destinationCity || "TBD",
     title: `${match.homeTeam} vs ${match.awayTeam}`,
     note:
-      index === 0
-        ? `Vuelo desde ${originCity} a ${destinationCity}.`
-        : "Dia dedicado al partido y desplazamiento local."
+      mode === "stay_origin"
+        ? `${match.venue || "Estadio por confirmar"} en ${match.city || destinationCity}.`
+        : index === 0
+          ? `Desplazamiento desde ${originCity} a ${destinationCity}.`
+          : "Dia dedicado al partido y desplazamiento local."
   }));
 }
 
 export function explainRecommendation({ preferences, recommended }) {
-  if (!recommended) return "No se pudo generar recomendacion.";
+  if (!recommended) return "Plan centrado en partidos y sedes disponibles. No hay recomendacion de vuelo activa.";
   const tags = preferences?.length ? preferences.join(", ") : "balance";
   return `Recomendacion basada en preferencias (${tags}), precio ${recommended.price} ${recommended.currency}, duracion ${recommended.duration} y ${recommended.stops} escalas.`;
 }

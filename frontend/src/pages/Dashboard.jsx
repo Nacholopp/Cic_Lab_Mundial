@@ -1,19 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { CalendarDays, CloudSun, Map, Trophy } from "lucide-react";
+import { CalendarDays, CloudSun, Map, Trophy, X } from "lucide-react";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import WorldMap from "../components/WorldMap.jsx";
 import FlightCard from "../components/FlightCard.jsx";
+import MatchList from "../components/MatchList.jsx";
+import OptionMenu from "../components/OptionMenu.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 import { fetchCurrentTime } from "../services/api.client.js";
 import { fanImage, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
 
+const matchTitles = {
+  stay_origin: "Partidos en tu ciudad o sede cercana",
+  travel_city: "Partidos en la ciudad elegida",
+  follow_team: "Partidos de tu seleccion"
+};
+
 export default function Dashboard() {
   const { plan, profile, country } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
+  const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
 
   useEffect(() => {
     let active = true;
@@ -71,6 +80,9 @@ export default function Dashboard() {
                 Mapa
               </Link>
             </div>
+            <div className="mt-4">
+              <OptionMenu currentMode={profile.mode} />
+            </div>
           </div>
         </div>
       </section>
@@ -125,6 +137,37 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {plan.matchPlan?.notice && (
+          <section className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-black">{plan.matchPlan.notice.title}</h2>
+                <p className="mt-1 text-sm font-medium">{plan.matchPlan.notice.message}</p>
+                {plan.matchPlan.notice.nearestCity?.distanceKm != null && (
+                  <p className="mt-1 text-sm font-bold">
+                    Distancia aproximada: {plan.matchPlan.notice.nearestCity.distanceKm} km.
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                className="rounded-md bg-amber-900 px-3 py-2 text-sm font-black text-white"
+                onClick={() => setShowAlternatives(true)}
+              >
+                Ver opciones similares
+              </button>
+            </div>
+          </section>
+        )}
+
+        <section className="mt-4">
+          <MatchList
+            matches={plan.matches}
+            title={plan.matchPlan?.hasExactMatches ? matchTitles[profile.mode] || "Partidos seleccionados" : "Opciones similares"}
+            emptyText="No hay partidos que encajen con esta busqueda."
+          />
+        </section>
+
         <section className="mt-4 grid gap-4 md:grid-cols-3">
           <FlightCard label="Mas barato" flight={plan.flights.cheapest} />
           <FlightCard label="Mas rapido" flight={plan.flights.fastest} />
@@ -161,6 +204,42 @@ export default function Dashboard() {
           <TeamShowcase />
         </section>
       </div>
+
+      {showAlternatives && plan.matchPlan?.notice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 px-4">
+          <div className="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-4 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-black">{plan.matchPlan.notice.title}</h2>
+                <p className="mt-1 text-sm font-medium text-slate-600">{plan.matchPlan.notice.message}</p>
+              </div>
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600"
+                onClick={() => setShowAlternatives(false)}
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4">
+              <MatchList matches={plan.matchPlan.alternatives} title="Opciones similares" />
+            </div>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <Link to="/" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-black text-slate-700">
+                Cambiar busqueda
+              </Link>
+              <button
+                type="button"
+                className="rounded-md bg-brandBlue px-3 py-2 text-sm font-black text-white"
+                onClick={() => setShowAlternatives(false)}
+              >
+                Seguir con estas opciones
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
