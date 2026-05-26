@@ -34,3 +34,28 @@
 .news-marquee-track:hover {
   animation-play-state: paused;
 }
+
+@keyframes news-photo-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.news-photo-track {
+  animation: news-photo-marquee 34s linear infinite;
+  will-change: transform;
+}
+
+.news-photo-track:hover {
+  animation-play-state: paused;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

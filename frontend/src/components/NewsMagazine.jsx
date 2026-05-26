@@ -1,0 +1,106 @@
+import { useMemo } from "react";
+import { ArrowUpRight } from "lucide-react";
+import { getNewsSource, newsSources } from "../data/newsSources.js";
+
+const storyImages = [
+  "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=80"
+];
+
+function normalizeStories(source, startIndex = 0) {
+  return source.stories.map((story, index) => ({
+    ...story,
+    country: source.country,
+    source: source.source,
+    image: storyImages[(startIndex + index) % storyImages.length]
+  }));
+}
+
+export default function NewsMagazine({ country }) {
+  const cards = useMemo(() => {
+    const selected = getNewsSource(country);
+    const supportingSources = [newsSources.ES, newsSources.MX, newsSources.AR, newsSources.BR, newsSources.UEFA].filter(
+      (source) => source.source !== selected.source
+    );
+    const pool = [
+      ...normalizeStories(selected, 0),
+      ...supportingSources.flatMap((source, index) => normalizeStories(source, index + 1))
+    ];
+    return pool.slice(0, 8);
+  }, [country]);
+
+  const featured = cards[0];
+  const tickerCards = [...cards, ...cards];
+
+  return (
+    <section className="overflow-hidden bg-slate-950 py-10 text-white">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-white/15 pb-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-brandRed">Prensa internacional</p>
+            <h2 className="mt-2 text-3xl font-black sm:text-5xl">Noticias que se mueven contigo</h2>
+          </div>
+          <p className="max-w-md text-sm font-semibold leading-6 text-white/65">
+            Titulares enlazados al medio deportivo elegido y fuentes clave del Mundial 2026.
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_1.4fr]">
+          <a
+            href={featured.url}
+            target="_blank"
+            rel="noreferrer"
+            className="group relative min-h-[360px] overflow-hidden rounded-lg border border-white/15 bg-white/5"
+          >
+            <img src={featured.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-5">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-brandBlue px-3 py-1 text-xs font-black uppercase">{featured.country}</span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black uppercase text-slate-950">
+                  {featured.source}
+                </span>
+              </div>
+              <h3 className="max-w-xl text-2xl font-black leading-tight sm:text-4xl">{featured.title}</h3>
+              <span className="mt-4 inline-flex items-center gap-2 text-sm font-black text-white/80">
+                Abrir noticia <ArrowUpRight size={17} />
+              </span>
+            </div>
+          </a>
+
+          <div className="relative overflow-hidden rounded-lg border border-white/15 bg-white/5 py-4">
+            <div className="news-photo-track flex w-max gap-4 px-4">
+              {tickerCards.map((story, index) => (
+                <a
+                  key={`${story.url}-${index}`}
+                  href={story.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group block w-[280px] overflow-hidden rounded-md border border-white/10 bg-white text-slate-950 shadow-xl sm:w-[340px]"
+                >
+                  <img src={story.image} alt="" className="h-44 w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <div className="p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-brandBlue">
+                        {story.country}
+                      </span>
+                      <span className="truncate text-[11px] font-black uppercase text-slate-400">{story.source}</span>
+                    </div>
+                    <h3 className="line-clamp-3 min-h-[72px] text-lg font-black leading-tight">{story.title}</h3>
+                    <p className="mt-3 inline-flex items-center gap-1 text-sm font-black text-brandRed">
+                      Leer ahora <ArrowUpRight size={15} />
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

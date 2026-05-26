@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
 import HostVenueSelect from "../components/HostVenueSelect.jsx";
+import NewsMagazine from "../components/NewsMagazine.jsx";
+import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
 import { newsCountryOptions } from "../data/newsSources.js";
-import { featuredTeams, heroImage } from "../data/worldCupVisuals.js";
+import { fifa26Logo, heroImage } from "../data/worldCupVisuals.js";
 
 const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
 const flowOptions = [
@@ -106,6 +108,21 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/92 px-4 py-3 text-white shadow-2xl backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <NewspaperDropdown country={form.country} />
+          <a
+            href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/25 sm:h-16 sm:w-12"
+            title="FIFA World Cup 26"
+          >
+            <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
+          </a>
+        </div>
+      </header>
+
       <section className="relative overflow-hidden px-4 py-8 text-white">
         <img src={heroImage} alt="Estadio mundialista" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-slate-950/70" />
@@ -289,24 +306,7 @@ export default function Onboarding() {
       </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-3 px-4 py-8 md:grid-cols-3">
-        {featuredTeams.slice(0, 3).map((team) => (
-          <article key={team.name} className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <img src={team.image} alt={`Ambiente de futbol para ${team.name}`} className="h-36 w-full object-cover" />
-            <div className="flex items-center gap-3 p-4">
-              <img
-                src={`https://flagcdn.com/w80/${team.badge}.png`}
-                alt={`Bandera de ${team.name}`}
-                className="h-9 w-12 rounded object-cover"
-              />
-              <div>
-                <h3 className="font-black">{team.name}</h3>
-                <p className="text-sm font-medium text-slate-600">{team.note}</p>
-              </div>
-            </div>
-          </article>
-        ))}
-      </section>
+      <NewsMagazine country={form.country} />
     </main>
   );
 }

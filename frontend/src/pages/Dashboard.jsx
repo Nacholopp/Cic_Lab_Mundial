@@ -49,17 +49,19 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/65 to-transparent" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-16">
           <header className="relative z-10 flex items-center justify-between gap-3">
-            <a
-              href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/20 sm:h-20 sm:w-16"
-              title="FIFA World Cup 26"
-            >
-              <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
-            </a>
             <NewspaperDropdown country={country} />
-            <ProfileDropdown profile={profile} />
+            <div className="flex shrink-0 items-center gap-3">
+              <ProfileDropdown profile={profile} />
+              <a
+                href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
+                target="_blank"
+                rel="noreferrer"
+                className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/20 sm:h-20 sm:w-16"
+                title="FIFA World Cup 26"
+              >
+                <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
+              </a>
+            </div>
           </header>
 
           <div className="max-w-3xl pb-8">
