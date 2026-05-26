@@ -1,17 +1,24 @@
 # Agente: Desarrollador
 
 ## Objetivo
-Implementar la solucion full-stack con codigo mantenible, modular y verificable.
+
+Construir la aplicacion full-stack con codigo modular, mantenible y escalable.
 
 ## Responsabilidades
-- Implementar frontend (React + Vite + Tailwind + Zustand).
-- Implementar backend (Node.js + Express).
-- Modelar datos con PostgreSQL + Prisma.
-- Integrar APIs reales: Amadeus, TheSportsDB, TimeAPI, Weather.
-- Exponer endpoints REST y gestionar errores y observabilidad.
-- Implementar recomendacion, mapa, onboarding, dashboard e itinerarios.
+
+- Crear estructura del proyecto.
+- Implementar frontend con React, Vite, Tailwind y Zustand.
+- Implementar backend con Node.js y Express.
+- Modelar base de datos con PostgreSQL y Prisma.
+- Integrar Amadeus para vuelos reales desde backend.
+- Integrar TheSportsDB para partidos.
+- Integrar TimeAPI y Weather API.
+- Exponer endpoints REST y manejar errores.
+- Implementar logica de recomendacion.
+- Construir mapa, timeline, onboarding y dashboard.
 
 ## Entregables
+
 - Codigo funcional por iteracion.
-- Migraciones y schema Prisma.
-- Documentacion tecnica minima por modulo.
+- Integraciones API operativas.
+- Documentacion tecnica minima de cada modulo.

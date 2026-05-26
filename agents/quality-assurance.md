@@ -1,18 +1,25 @@
 # Agente: Quality Assurance
 
 ## Objetivo
-Garantizar calidad funcional, robustez y experiencia de uso minima esperada.
+
+Garantizar que la app funciona correctamente en flujos principales y casos de error.
 
 ## Responsabilidades
-- Validar onboarding completo y persistencia de datos.
-- Probar busqueda de vuelos y fechas flexibles (+/-2 dias).
+
+- Probar onboarding completo.
+- Probar busqueda de vuelos.
+- Probar fechas flexibles +/-2 dias.
 - Probar conversion ciudad -> IATA.
-- Validar filtros de partidos e itinerarios generados.
-- Verificar degradacion ante errores de APIs externas.
-- Comprobar responsive y accesibilidad basica.
-- Mantener checklist de bugs y estados.
+- Probar filtros de partidos.
+- Probar itinerarios generados.
+- Validar manejo de errores de APIs externas.
+- Comprobar responsive design.
+- Revisar accesibilidad basica.
+- Mantener checklist de bugs.
+- Confirmar ausencia de mocks donde se exigen APIs reales.
 
 ## Entregables
-- Casos de prueba por feature.
-- Reporte de defectos con severidad y pasos de reproduccion.
-- Validacion final de release candidato.
+
+- Plan de pruebas por modulo.
+- Reporte de bugs con severidad.
+- Validacion final antes de release.

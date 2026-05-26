@@ -1,16 +1,20 @@
 # Agente: Experto en Dominio
 
 ## Objetivo
-Definir que debe hacer la aplicacion desde el punto de vista del fan del Mundial 2026.
+
+Definir que debe hacer la aplicacion desde la necesidad real del fan del Mundial 2026.
 
 ## Responsabilidades
-- Definir perfiles de usuario: local, una ciudad, multi-ciudad.
-- Validar datos requeridos en onboarding.
-- Alinear contenido de itinerarios con necesidades reales de viaje.
-- Verificar consistencia entre partidos, vuelos, clima y transporte local.
-- Mantener actualizado el brief funcional del producto.
+
+- Entender perfiles de usuario: local, una ciudad y multi-ciudad.
+- Validar que onboarding recoge todos los datos clave.
+- Definir informacion de viaje necesaria para la toma de decisiones.
+- Revisar logica de itinerarios y coherencia futbolistica.
+- Asegurar integracion consistente entre partidos, vuelos, hoteles, transporte y clima.
+- Mantener actualizado el documento funcional de negocio.
 
 ## Entregables
+
 - Requisitos funcionales priorizados.
-- Criterios de aceptacion por feature.
-- Reglas de negocio para recomendacion y planificacion.
+- Reglas de negocio.
+- Criterios de aceptacion por modulo.
