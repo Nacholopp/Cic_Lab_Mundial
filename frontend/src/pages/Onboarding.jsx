@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Flag, Plane, Trophy, Users } from "lucide-react";
+import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
 import { featuredTeams, heroImage } from "../data/worldCupVisuals.js";
@@ -46,6 +47,8 @@ export default function Onboarding() {
 
   const submit = async (event) => {
     event.preventDefault();
+    const adults = Number(form.adults);
+    const budgetPerPerson = form.budget ? Number(form.budget) : null;
     try {
       setLoading(true);
       setError(null);
@@ -54,8 +57,9 @@ export default function Onboarding() {
         originCity: form.originCity,
         destinationCity: form.destinationCity,
         departureDate: form.departureDate,
-        adults: Number(form.adults),
-        budget: form.budget ? Number(form.budget) : null,
+        adults,
+        budgetPerPerson,
+        budget: budgetPerPerson == null ? null : budgetPerPerson * adults,
         preferences: form.preferences
       };
       const response = await buildPlan(payload);
@@ -111,16 +115,10 @@ export default function Onboarding() {
             <h2 className="text-xl font-black">Crea tu plan</h2>
             <p className="mt-1 text-sm text-slate-600">Elige equipo, origen y destino mundialista.</p>
             <div className="mt-5 grid gap-4">
-              <label className="text-sm font-bold">
-                Seleccion favorita
-            <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
-              name="favoriteTeam"
-              value={form.favoriteTeam}
-              onChange={updateField}
-              required
-            />
-          </label>
+              <TeamCountrySelect
+                value={form.favoriteTeam}
+                onChange={(favoriteTeam) => setForm((prev) => ({ ...prev, favoriteTeam }))}
+              />
           <label className="text-sm font-bold">
             Ciudad origen
             <input
@@ -154,7 +152,7 @@ export default function Onboarding() {
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">
-            Presupuesto (USD)
+            Presupuesto por persona (USD)
             <input
               type="number"
               min="0"
