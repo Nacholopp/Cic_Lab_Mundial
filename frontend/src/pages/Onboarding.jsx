@@ -46,6 +46,28 @@ const flowOptions = [
     description: "Busca todos los partidos disponibles de esa seleccion."
   }
 ];
+const originCitySuggestions = [
+  "Madrid",
+  "Barcelona",
+  "Valencia",
+  "Sevilla",
+  "Bilbao",
+  "Malaga",
+  "Paris",
+  "London",
+  "Rome",
+  "Berlin",
+  "Mexico City",
+  "Guadalajara",
+  "Monterrey",
+  "Dallas",
+  "Atlanta",
+  "Los Angeles",
+  "Miami",
+  "Toronto",
+  "Vancouver",
+  "New York"
+];
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -269,6 +291,7 @@ export default function Onboarding() {
             <input
               className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="originCity"
+              list="origin-city-suggestions"
               value={form.originCity}
               onChange={(event) =>
                 setForm((prev) => ({
@@ -279,6 +302,11 @@ export default function Onboarding() {
               }
               required
             />
+            <datalist id="origin-city-suggestions">
+              {originCitySuggestions.map((city) => (
+                <option key={city} value={city} />
+              ))}
+            </datalist>
           </label>
           {form.mode !== "stay_origin" && (
             <AirportPicker

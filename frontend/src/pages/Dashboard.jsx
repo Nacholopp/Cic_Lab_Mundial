@@ -6,6 +6,7 @@ import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import MapLibreFlightsMap from "../components/MapLibreFlightsMap.jsx";
 import FlightCard from "../components/FlightCard.jsx";
 import MatchList from "../components/MatchList.jsx";
+import MatchVenueCards from "../components/MatchVenueCards.jsx";
 import OptionMenu from "../components/OptionMenu.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
@@ -165,10 +166,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-lg font-black">Ciudades anfitrionas</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {hostCities.map((city) => (
-                  <span key={city} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+              <h2 className="text-lg font-black">Ciudades sede</h2>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {hostCities.slice(0, 8).map((city) => (
+                  <span
+                    key={city}
+                    className="rounded-md border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 text-center text-xs font-bold text-slate-700"
+                  >
                     {city}
                   </span>
                 ))}
@@ -223,6 +227,7 @@ export default function Dashboard() {
             title={plan.matchPlan?.hasExactMatches ? matchTitles[profile.mode] || "Partidos seleccionados" : "Opciones similares"}
             emptyText="No hay partidos que encajen con esta busqueda."
           />
+          {isTravelCityPlan && <MatchVenueCards matches={plan.matches} />}
           {plan.dataSources?.matches && (
             <p className="mt-2 text-xs font-semibold text-slate-500">Fuente de calendario: {plan.dataSources.matches}</p>
           )}
@@ -344,6 +349,15 @@ export default function Dashboard() {
                   </p>
                   <p>{plan.weather.description}</p>
                   <p>Humedad: {plan.weather.humidity}%</p>
+                  {plan.weather.daily?.length > 0 && (
+                    <div className="mt-3 space-y-1 border-t border-slate-200 pt-3">
+                      {plan.weather.daily.slice(0, 5).map((day) => (
+                        <p key={day.date} className="text-xs font-semibold text-slate-600">
+                          {day.date}: {day.temperatureMinC} a {day.temperatureMaxC} C - {day.description}
+                        </p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">

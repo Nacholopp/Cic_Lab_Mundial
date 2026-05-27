@@ -41,6 +41,12 @@ function dateMinusDays(isoDate, days) {
   return date.toISOString().slice(0, 10);
 }
 
+function datePlusDays(isoDate, days) {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 async function buildFollowTeamRoute({
   matches,
   originCity,
@@ -301,7 +307,13 @@ export async function buildTravelPlan(req, res) {
   let weather = null;
   let weatherError = null;
   try {
-    weather = await getWeatherByCity(effectiveDestinationCity);
+    const itineraryDates = itinerary.map((item) => item.date).filter(Boolean).sort();
+    const weatherStart = itineraryDates[0] || departureDate || new Date().toISOString().slice(0, 10);
+    const weatherEnd = itineraryDates[itineraryDates.length - 1] || endDate || datePlusDays(weatherStart, 4);
+    weather = await getWeatherByCity(effectiveDestinationCity, {
+      startDate: weatherStart,
+      endDate: weatherEnd
+    });
   } catch (error) {
     weatherError = error.message;
   }
