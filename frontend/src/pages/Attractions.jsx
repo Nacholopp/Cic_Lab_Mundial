@@ -33,18 +33,18 @@ export default function Attractions() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] pb-8 text-slate-950">
-      <section className="relative min-h-[360px] overflow-hidden px-4 py-6 text-white">
+      <section className="relative overflow-hidden px-4 py-6 text-white">
         <img src={stadiumImage} alt="Estadio del Mundial" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-slate-950/65" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-14">
+        <div className="relative mx-auto flex min-h-[420px] max-w-7xl flex-col gap-10 sm:min-h-[460px] sm:gap-14">
           <header className="flex items-center justify-between">
             <Link to="/dashboard" className="rounded-md border border-white/50 bg-white/10 px-3 py-2 text-sm font-black backdrop-blur">
               Volver
             </Link>
             <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-16 w-12 rounded-md bg-black object-contain p-1" />
           </header>
-          <div className="max-w-3xl pb-10">
+          <div className="max-w-3xl pb-12">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur">
               <MapPin size={15} />
               Zonas que ver
@@ -79,7 +79,7 @@ export default function Attractions() {
         </div>
       </section>
 
-      <div className="mx-auto -mt-8 max-w-7xl px-4">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{error}</p>}
 
         <section className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
