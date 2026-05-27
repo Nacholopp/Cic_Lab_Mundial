@@ -3,8 +3,10 @@ import WorldMap from "../components/WorldMap.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 
 export default function MapView() {
-  const { profile } = usePlannerStore();
-  if (!profile) return <Navigate to="/" replace />;
+  const { profile, plan } = usePlannerStore();
+  if (!profile || !plan) return <Navigate to="/" replace />;
+  const destinationCity =
+    plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6">
@@ -15,7 +17,7 @@ export default function MapView() {
             Volver
           </Link>
         </div>
-        <WorldMap originCity={profile.originCity} destinationCity={profile.destinationCity} />
+        <WorldMap originCity={profile.originCity} destinationCity={destinationCity} />
       </div>
     </main>
   );

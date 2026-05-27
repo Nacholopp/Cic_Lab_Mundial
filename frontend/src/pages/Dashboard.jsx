@@ -24,6 +24,8 @@ export default function Dashboard() {
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
   const isLocalPlan = profile.mode === "stay_origin";
+  const effectiveDestinationCity =
+    plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
 
   useEffect(() => {
     let active = true;
@@ -75,7 +77,7 @@ export default function Dashboard() {
             <p className="mt-4 max-w-2xl text-base font-medium text-white/85 sm:text-lg">
               {isLocalPlan
                 ? `Partidos, horarios y sitios para ver el Mundial en ${profile.originCity}.`
-                : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${profile.destinationCity}, con vuelos, ruta, clima y contexto de selecciones en una sola vista.`}
+                : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${effectiveDestinationCity}, con vuelos, ruta, clima y contexto de selecciones en una sola vista.`}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -115,7 +117,7 @@ export default function Dashboard() {
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">{isLocalPlan ? "Ciudad" : "Destino"}</p>
-            <p className="mt-1 text-2xl font-black">{isLocalPlan ? profile.originCity : profile.destinationCity}</p>
+            <p className="mt-1 text-2xl font-black">{isLocalPlan ? profile.originCity : effectiveDestinationCity}</p>
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Presupuesto</p>
@@ -130,7 +132,7 @@ export default function Dashboard() {
         </section>
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.9fr_1fr]">
-          <WorldMap originCity={profile.originCity} destinationCity={profile.destinationCity} />
+          <WorldMap originCity={profile.originCity} destinationCity={effectiveDestinationCity} />
           <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <img src={stadiumImage} alt="Estadio del Mundial" className="h-36 w-full object-cover" />

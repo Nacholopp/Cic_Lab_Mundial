@@ -114,7 +114,7 @@ export default function Onboarding() {
       };
       const response = await buildPlan(payload);
       setCountry(form.country);
-      setProfile(payload);
+      setProfile(response.profile || payload);
       setPlan(response);
       navigate("/dashboard");
     } catch (submitError) {
