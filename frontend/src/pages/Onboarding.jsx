@@ -137,6 +137,14 @@ export default function Onboarding() {
   const submit = async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+<<<<<<< HEAD
+=======
+    const submittedOriginCity =
+      form.originCity?.trim() ||
+      formData.get("originCity")?.toString().trim() ||
+      form.originAirport?.city?.trim() ||
+      "";
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
     const adults = Number(form.adults);
     const budgetPerPerson = form.budget ? Number(form.budget) : null;
     const originCityFromDom = formData.get("originCity")?.toString().trim() || "";
@@ -173,11 +181,19 @@ export default function Onboarding() {
       setError(null);
       const payload = {
         mode: form.mode,
+<<<<<<< HEAD
         favoriteTeam: normalizedFavoriteTeam,
         originCity: normalizedOriginCity,
         destinationCity: form.mode === "travel_city" ? normalizedDestinationCity : null,
         departureDate: form.mode === "stay_origin" ? null : normalizedDepartureDate,
         endDate: form.mode === "follow_team" ? (form.endDate || normalizedDepartureDate) : null,
+=======
+        favoriteTeam: form.favoriteTeam,
+        originCity: submittedOriginCity,
+        destinationCity: form.mode === "travel_city" ? form.destinationCity : null,
+        departureDate: form.mode === "stay_origin" ? null : form.departureDate,
+        endDate: form.mode === "follow_team" ? (form.endDate || form.departureDate) : null,
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
         adults,
         originCoordinates: null,
         budgetPerPerson,

@@ -193,6 +193,7 @@ export async function buildTravelPlan(req, res) {
     destinationAirport = null,
     cabinClass = "economy",
     maxStops = 1
+<<<<<<< HEAD
   } = body;
   const destinationCity =
     rawDestinationCity?.toString().trim() ||
@@ -211,11 +212,27 @@ export async function buildTravelPlan(req, res) {
     "";
   const favoriteTeam = rawFavoriteTeam?.toString().trim() || "";
   const departureDate = rawDepartureDate?.toString().trim() || "";
+=======
+  } = req.body || {};
+  const resolvedOriginCity =
+    originCity?.trim?.() ||
+    originAirport?.city?.trim?.() ||
+    originAirport?.name?.replace(/\s+Airport$/i, "").trim?.() ||
+    "";
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
   const endDate = mode === "follow_team" ? (rawEndDate || departureDate || null) : rawEndDate;
   const effectiveInputDestination = destinationCity || body.requestedDestinationCity?.toString().trim() || "";
 
+<<<<<<< HEAD
   if (!originCity) {
     return res.status(400).json({ ok: false, error: "originCity is required" });
+=======
+  if (!resolvedOriginCity) {
+    return res.status(400).json({
+      ok: false,
+      error: "originCity is required"
+    });
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
   }
 
   if (mode !== "stay_origin" && !departureDate) {
@@ -238,15 +255,24 @@ export async function buildTravelPlan(req, res) {
   const matchPlan = buildMatchPlan({
     matches,
     mode,
+<<<<<<< HEAD
     originCity,
     destinationCity: effectiveInputDestination,
+=======
+    originCity: resolvedOriginCity,
+    destinationCity,
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
     favoriteTeam,
     departureDate,
     endDate,
     originCoordinates
   });
 
+<<<<<<< HEAD
   const effectiveDestinationCity = matchPlan.selectedCity || effectiveInputDestination || originCity;
+=======
+  const effectiveDestinationCity = matchPlan.selectedCity || destinationCity || resolvedOriginCity;
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
   let originIata = null;
   let destinationIata = null;
   let offers = [];
@@ -256,7 +282,7 @@ export async function buildTravelPlan(req, res) {
   if (mode === "follow_team" && matchPlan.hasExactMatches) {
     followTeamRoute = await buildFollowTeamRoute({
       matches: matchPlan.matches,
-      originCity,
+      originCity: resolvedOriginCity,
       adults,
       cabinClass,
       maxStops,
@@ -268,10 +294,10 @@ export async function buildTravelPlan(req, res) {
     const firstFlight = followTeamRoute.routeFlights.find((leg) => leg.recommended)?.recommended || null;
     originIata = firstFlight?.originIata || null;
     destinationIata = firstFlight?.destinationIata || null;
-  } else if (mode !== "stay_origin" && originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
+  } else if (mode !== "stay_origin" && resolvedOriginCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
     try {
       const flightSearch = await getFlexibleFlightOffers({
-        originCity,
+        originCity: resolvedOriginCity,
         destinationCity: effectiveDestinationCity,
         departureDate,
         adults,
@@ -290,7 +316,7 @@ export async function buildTravelPlan(req, res) {
 
   const rankedFlights = rankFlights(offers, preferences);
   const relevantMatches = matchPlan.hasExactMatches ? matchPlan.matches : matchPlan.alternatives;
-  const itinerary = buildItinerary(relevantMatches, originCity, effectiveDestinationCity, mode);
+  const itinerary = buildItinerary(relevantMatches, resolvedOriginCity, effectiveDestinationCity, mode);
   const recommendationText = explainRecommendation({
     preferences,
     recommended: rankedFlights.recommended
@@ -312,10 +338,10 @@ export async function buildTravelPlan(req, res) {
 
   const recommendedPrice = rankedFlights.recommended?.price || 0;
   const estimatedTotalCost = recommendedPrice * adults;
-  const watchSpots = mode === "stay_origin" ? buildWatchSpots(originCity) : [];
+  const watchSpots = mode === "stay_origin" ? buildWatchSpots(resolvedOriginCity) : [];
   const destinationGuide = await getDestinationGuide({
     city: effectiveDestinationCity,
-    originCity
+    originCity: resolvedOriginCity
   });
   const budgetStatus =
     budget == null
@@ -324,12 +350,24 @@ export async function buildTravelPlan(req, res) {
         ? "within_budget"
         : "over_budget";
 
+<<<<<<< HEAD
+=======
+  const savedItineraryId = await saveItineraryForUser({
+    userId: req.authUser?.id || null,
+    mode,
+    originCity: resolvedOriginCity,
+    destinationCity: effectiveDestinationCity,
+    departureDate,
+    totalCost: estimatedTotalCost
+  });
+
+>>>>>>> 78a91194d4c5532360fc232531bc9d9afc87729e
   res.json({
     ok: true,
     profile: {
       mode,
       favoriteTeam,
-      originCity,
+      originCity: resolvedOriginCity,
       destinationCity: effectiveDestinationCity,
       requestedDestinationCity: destinationCity,
       originIata,
