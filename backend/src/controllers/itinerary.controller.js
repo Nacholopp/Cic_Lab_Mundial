@@ -3,6 +3,7 @@ import { rankFlights, buildItinerary, explainRecommendation } from "../services/
 import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
+import { getCityImageUrl } from "../services/city-image.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
 import { addDays } from "../utils/date.utils.js";
@@ -267,7 +268,9 @@ export async function buildTravelPlan(req, res) {
   }
 
   const rankedFlights = rankFlights(offers, preferences);
-  const relevantMatches = matchPlan.hasExactMatches ? matchPlan.matches : matchPlan.alternatives;
+  const relevantMatches = (matchPlan.hasExactMatches ? matchPlan.matches : matchPlan.alternatives).sort((a, b) =>
+    `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`)
+  );
   const itinerary = buildItinerary(relevantMatches, originCity, effectiveDestinationCity, mode);
   const recommendationText = explainRecommendation({
     preferences,
@@ -276,10 +279,17 @@ export async function buildTravelPlan(req, res) {
 
   let weather = null;
   let weatherError = null;
+  let cityImageUrl = null;
   try {
     weather = await getWeatherByCity(effectiveDestinationCity);
   } catch (error) {
     weatherError = error.message;
+  }
+
+  try {
+    cityImageUrl = await getCityImageUrl(effectiveDestinationCity);
+  } catch {
+    cityImageUrl = null;
   }
 
   const recommendedPrice = rankedFlights.recommended?.price || 0;
@@ -289,6 +299,20 @@ export async function buildTravelPlan(req, res) {
     city: effectiveDestinationCity,
     originCity
   });
+
+  let destinationGuides = null;
+  if (mode === "follow_team") {
+    const routeCities = [...new Set((relevantMatches || []).map((match) => match.city).filter(Boolean))];
+    destinationGuides = await Promise.all(
+      routeCities.map((city) =>
+        getDestinationGuide({
+          city,
+          originCity
+        }).catch(() => null)
+      )
+    );
+    destinationGuides = destinationGuides.filter(Boolean);
+  }
   const budgetStatus =
     budget == null
       ? "no_budget_provided"
@@ -326,13 +350,15 @@ export async function buildTravelPlan(req, res) {
     recommendationText,
     weather,
     weatherError,
+    cityImageUrl,
     destinationGuide,
+    destinationGuides,
     followTeamRoute: {
       legs: followTeamRoute.routeFlights,
       segments: followTeamRoute.routeSegments
     },
     dataSources: {
-      matches: "TheSportsDB league 4429 with fallback World Cup 2026 seed",
+      matches: "Football-Data.org (WC) con fallback TheSportsDB y seed local",
       maps: destinationGuide.dataSources
     },
     costs: {

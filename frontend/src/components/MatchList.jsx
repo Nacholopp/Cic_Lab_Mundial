@@ -1,11 +1,14 @@
 import { CalendarDays, Clock, MapPin } from "lucide-react";
+import { teamFifaUrl } from "../utils/teamVisuals.js";
+import { formatKickoffForTimezone, formatUtcLabel } from "../utils/matchTime.js";
+import TeamBadge from "./TeamBadge.jsx";
 
-function formatTime(timeUtc) {
-  if (!timeUtc) return "Hora por confirmar";
-  return `${timeUtc.slice(0, 5)} UTC`;
-}
-
-export default function MatchList({ matches, title = "Partidos", emptyText = "Sin partidos para esta seleccion." }) {
+export default function MatchList({
+  matches,
+  title = "Partidos",
+  emptyText = "Sin partidos para esta seleccion.",
+  travelerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+}) {
   if (!matches?.length) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -23,9 +26,21 @@ export default function MatchList({ matches, title = "Partidos", emptyText = "Si
           <article key={match.id} className="rounded-md border border-slate-200 p-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-black text-slate-950">
-                  {match.homeTeam} vs {match.awayTeam}
-                </p>
+                <div className="flex flex-wrap items-center gap-2 text-sm font-black text-slate-950">
+                    <span className="inline-flex items-center gap-1.5">
+                    <TeamBadge team={match.homeTeam} width={40} className="h-4 w-6" />
+                    <a href={teamFifaUrl(match.homeTeam)} target="_blank" rel="noreferrer" className="hover:underline">
+                      {match.homeTeam}
+                    </a>
+                  </span>
+                  <span className="text-slate-500">vs</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <TeamBadge team={match.awayTeam} width={40} className="h-4 w-6" />
+                    <a href={teamFifaUrl(match.awayTeam)} target="_blank" rel="noreferrer" className="hover:underline">
+                      {match.awayTeam}
+                    </a>
+                  </span>
+                </div>
                 <p className="mt-1 text-xs font-bold uppercase text-slate-500">{match.stage || "Partido"}</p>
               </div>
               <div className="rounded-md bg-slate-100 px-2 py-1 text-xs font-black text-slate-700">
@@ -39,7 +54,17 @@ export default function MatchList({ matches, title = "Partidos", emptyText = "Si
               </span>
               <span className="inline-flex items-center gap-2">
                 <Clock size={16} className="text-brandRed" />
-                {match.localKickoff || formatTime(match.timeUtc)}
+                <span>
+                  <span className="block">Hora sede: {match.localKickoff || formatUtcLabel(match.timeUtc)}</span>
+                  <span className="block text-xs text-slate-500">
+                    Tu hora ({travelerTimezone}):{" "}
+                    {formatKickoffForTimezone({
+                      date: match.date,
+                      timeUtc: match.timeUtc,
+                      timezone: travelerTimezone
+                    }) || formatUtcLabel(match.timeUtc)}
+                  </span>
+                </span>
               </span>
               <span className="inline-flex items-center gap-2">
                 <MapPin size={16} className="text-brandRed" />

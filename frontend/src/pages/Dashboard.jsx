@@ -9,10 +9,11 @@ import MatchList from "../components/MatchList.jsx";
 import OptionMenu from "../components/OptionMenu.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
-import GroupMatchups from "../components/GroupMatchups.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 import { fetchCurrentTime } from "../services/api.client.js";
-import { fanImage, fifa26Logo, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
+import { fanImage, fifa26Logo, heroImage, stadiumImage } from "../data/worldCupVisuals.js";
+import { formatKickoffForTimezone, formatUtcLabel } from "../utils/matchTime.js";
+import { teamFlagUrl } from "../utils/teamVisuals.js";
 
 const matchTitles = {
   stay_origin: "Horarios para ver en tu ciudad",
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const effectiveDestinationCity =
     plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
   const followTeamLegs = plan?.followTeamRoute?.legs || [];
+  const travelerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     let active = true;
@@ -107,6 +109,13 @@ export default function Dashboard() {
                 <Landmark size={18} />
                 Zonas que ver
               </Link>
+              <Link
+                className="inline-flex items-center gap-2 rounded-md border border-white/50 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur"
+                to="/tournament"
+              >
+                <Trophy size={18} />
+                Torneo
+              </Link>
             </div>
             <div className="mt-4">
               <OptionMenu currentMode={profile.mode} />
@@ -156,16 +165,6 @@ export default function Dashboard() {
                     Hora local destino: {localTime.datetime} ({localTime.timezone})
                   </p>
                 )}
-              </div>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-lg font-black">Ciudades anfitrionas</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {hostCities.map((city) => (
-                  <span key={city} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
-                    {city}
-                  </span>
-                ))}
               </div>
             </div>
             {!isLocalPlan && plan.destinationGuide && (
@@ -297,10 +296,36 @@ export default function Dashboard() {
                     />
                     <div className="space-y-2 p-3">
                       <p className="text-sm font-black text-slate-950">
-                        {match.homeTeam} vs {match.awayTeam}
+                        <span className="inline-flex items-center gap-1.5">
+                          <img
+                            src={teamFlagUrl(match.homeTeam, 40) || ""}
+                            alt={`Bandera de ${match.homeTeam}`}
+                            className="h-4 w-6 rounded-sm object-cover ring-1 ring-slate-200"
+                            loading="lazy"
+                          />
+                          {match.homeTeam}
+                        </span>{" "}
+                        vs{" "}
+                        <span className="inline-flex items-center gap-1.5">
+                          <img
+                            src={teamFlagUrl(match.awayTeam, 40) || ""}
+                            alt={`Bandera de ${match.awayTeam}`}
+                            className="h-4 w-6 rounded-sm object-cover ring-1 ring-slate-200"
+                            loading="lazy"
+                          />
+                          {match.awayTeam}
+                        </span>
                       </p>
                       <p className="text-sm font-medium text-slate-700">
-                        {match.localKickoff || `${match.date} ${match.timeUtc?.slice(0, 5) || ""} UTC`}
+                        Hora sede: {match.localKickoff || `${match.date} ${formatUtcLabel(match.timeUtc)}`}
+                      </p>
+                      <p className="text-xs font-medium text-slate-500">
+                        Tu hora ({travelerTimezone}):{" "}
+                        {formatKickoffForTimezone({
+                          date: match.date,
+                          timeUtc: match.timeUtc,
+                          timezone: travelerTimezone
+                        }) || formatUtcLabel(match.timeUtc)}
                       </p>
                       <p className="text-sm font-semibold text-slate-700">
                         {match.city} - {match.venue || "Estadio por confirmar"}
@@ -325,7 +350,12 @@ export default function Dashboard() {
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Timeline items={plan.itinerary} />
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <img src={fanImage} alt="Aficion en un partido de futbol" className="h-40 w-full object-cover" />
+            <img
+              src={plan.cityImageUrl || fanImage}
+              alt={`Imagen real de ${effectiveDestinationCity}`}
+              className="h-40 w-full object-cover"
+              loading="lazy"
+            />
             <div className="p-4">
               <div className="mb-2 flex items-center gap-2">
                 <CloudSun size={19} className="text-brandRed" />
@@ -341,7 +371,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  {plan.weatherError || "Sin datos de clima. Configura OPENWEATHER_API_KEY."}
+                  {plan.weatherError || "Sin datos de clima disponibles en este momento."}
                 </p>
               )}
             </div>
@@ -354,7 +384,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        <GroupMatchups />
       </div>
 
       {showAlternatives && plan.matchPlan?.notice && (

@@ -1,6 +1,7 @@
 import { env } from "../config/env.js";
 import { getCachedJson, setCachedJson } from "../config/cache.js";
 import { fallbackWorldCupMatches, hostCities } from "../data/worldcup2026.data.js";
+import { getFootballDataWorldCupMatches } from "./football-data.service.js";
 
 const cityAliases = new Map([
   ["ciudad de mexico", "Mexico City"],
@@ -109,6 +110,16 @@ export async function getUpcomingMatches() {
   const cacheKey = `sportsdb:worldcup2026:${env.sportsDbLeagueId}`;
   const cached = await getCachedJson(cacheKey);
   if (cached?.matches) return cached.matches;
+
+  try {
+    const footballDataMatches = await getFootballDataWorldCupMatches();
+    if (footballDataMatches.length) {
+      await setCachedJson(cacheKey, { matches: footballDataMatches }, 60 * 60);
+      return footballDataMatches;
+    }
+  } catch {
+    // Fallback to TheSportsDB below.
+  }
 
   let events = [];
   try {
