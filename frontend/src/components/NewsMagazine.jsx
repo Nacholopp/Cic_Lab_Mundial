@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { getNewsSource, newsSources } from "../data/newsSources.js";
 
-const storyImages = [
+const footballFallbackImages = [
   "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=900&q=80",
   "https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?auto=format&fit=crop&w=900&q=80",
@@ -11,13 +11,51 @@ const storyImages = [
   "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=900&q=80"
 ];
 
+function buildImageQueue(story, index) {
+  return [
+    story.image,
+    ...(story.fallbackImages || []),
+    footballFallbackImages[index % footballFallbackImages.length],
+    footballFallbackImages[(index + 2) % footballFallbackImages.length],
+    footballFallbackImages[(index + 4) % footballFallbackImages.length]
+  ].filter(Boolean);
+}
+
 function normalizeStories(source, startIndex = 0) {
   return source.stories.map((story, index) => ({
     ...story,
     country: source.country,
     source: source.source,
-    image: storyImages[(startIndex + index) % storyImages.length]
+    images: buildImageQueue(story, startIndex + index)
   }));
+}
+
+function NewsCoverImage({ story, className }) {
+  const [imageIndex, setImageIndex] = useState(0);
+  const image = story.images?.[imageIndex];
+
+  if (!image) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(239,68,68,0.45),transparent_30%),linear-gradient(135deg,#052e16,#0f172a_58%,#1e3a8a)]`}
+        aria-hidden="true"
+      >
+        <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-950">
+          Futbol
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={image}
+      alt={`Portada de ${story.title}`}
+      className={className}
+      loading="lazy"
+      onError={() => setImageIndex((current) => current + 1)}
+    />
+  );
 }
 
 export default function NewsMagazine({ country }) {
@@ -56,7 +94,10 @@ export default function NewsMagazine({ country }) {
             rel="noreferrer"
             className="group relative min-h-[360px] overflow-hidden rounded-lg border border-white/15 bg-white/5"
           >
-            <img src={featured.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+            <NewsCoverImage
+              story={featured}
+              className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 p-5">
               <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -82,7 +123,10 @@ export default function NewsMagazine({ country }) {
                   rel="noreferrer"
                   className="group block w-[280px] overflow-hidden rounded-md border border-white/10 bg-white text-slate-950 shadow-xl sm:w-[340px]"
                 >
-                  <img src={story.image} alt="" className="h-44 w-full object-cover transition duration-500 group-hover:scale-105" />
+                  <NewsCoverImage
+                    story={story}
+                    className="h-44 w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
                   <div className="p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
                       <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase text-brandBlue">
