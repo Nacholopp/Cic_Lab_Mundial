@@ -132,6 +132,12 @@ export default function Onboarding() {
 
   const submit = async (event) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const submittedOriginCity =
+      form.originCity?.trim() ||
+      formData.get("originCity")?.toString().trim() ||
+      form.originAirport?.city?.trim() ||
+      "";
     const adults = Number(form.adults);
     const budgetPerPerson = form.budget ? Number(form.budget) : null;
     try {
@@ -140,7 +146,7 @@ export default function Onboarding() {
       const payload = {
         mode: form.mode,
         favoriteTeam: form.favoriteTeam,
-        originCity: form.originCity,
+        originCity: submittedOriginCity,
         destinationCity: form.mode === "travel_city" ? form.destinationCity : null,
         departureDate: form.mode === "stay_origin" ? null : form.departureDate,
         endDate: form.mode === "follow_team" ? (form.endDate || form.departureDate) : null,
