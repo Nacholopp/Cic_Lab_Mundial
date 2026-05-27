@@ -47,6 +47,21 @@ const knownCityCoordinates = new Map([
   ["calgary", { lat: 51.0447, lon: -114.0719 }]
 ]);
 
+const worldCupGroups = {
+  A: ["Mexico", "South Africa", "South Korea", "Czech Republic"],
+  B: ["Canada", "Switzerland", "Qatar", "Bosnia and Herzegovina"],
+  C: ["Brazil", "Morocco", "Haiti", "Scotland"],
+  D: ["United States", "Paraguay", "Australia", "Turkey"],
+  E: ["Germany", "Curacao", "Ivory Coast", "Ecuador"],
+  F: ["Netherlands", "Japan", "Tunisia", "Sweden"],
+  G: ["Belgium", "Egypt", "Iran", "New Zealand"],
+  H: ["Spain", "Cape Verde", "Saudi Arabia", "Uruguay"],
+  I: ["France", "Senegal", "Norway", "Iraq"],
+  J: ["Argentina", "Algeria", "Austria", "Jordan"],
+  K: ["Portugal", "Uzbekistan", "Colombia", "DR Congo"],
+  L: ["England", "Croatia", "Ghana", "Panama"]
+};
+
 function normalizeText(value = "") {
   return value
     .toString()
@@ -97,6 +112,52 @@ function dateMatches(match, startDate, endDate) {
 function withFallbackMatches(matches = []) {
   const usable = matches.filter((match) => match.city && match.date);
   return usable.length ? usable : fallbackWorldCupMatches;
+}
+
+function addDays(dateString, offsetDays) {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + offsetDays);
+  return date.toISOString().slice(0, 10);
+}
+
+function groupForTeam(team) {
+  const target = normalizeText(team);
+  for (const [group, teams] of Object.entries(worldCupGroups)) {
+    if (teams.some((name) => normalizeText(name) === target)) {
+      return { group, teams };
+    }
+  }
+  return null;
+}
+
+function inferredMatchesForTeam({ favoriteTeam, departureDate, endDate }) {
+  const groupData = groupForTeam(favoriteTeam);
+  if (!groupData) return [];
+
+  const opponents = groupData.teams.filter((team) => normalizeText(team) !== normalizeText(favoriteTeam));
+  if (!opponents.length) return [];
+
+  const baseDate = departureDate || "2026-06-11";
+  const dates = opponents.map((_, index) => addDays(baseDate, index * 4));
+  const validDates = dates.filter((date) => !endDate || date <= endDate);
+  const selectedDates = validDates.length ? validDates : dates.slice(0, 1);
+
+  return selectedDates.map((date, index) => {
+    const host = hostCities[(Math.abs(favoriteTeam.length * 7 + index * 13)) % hostCities.length];
+    const isHome = index % 2 === 0;
+    return {
+      id: `projected-${normalizeText(favoriteTeam)}-${index + 1}`,
+      homeTeam: isHome ? favoriteTeam : opponents[index],
+      awayTeam: isHome ? opponents[index] : favoriteTeam,
+      date,
+      timeUtc: "19:00:00",
+      venue: host.stadium,
+      city: host.name,
+      stage: `Group ${groupData.group} (estimado)`,
+      source: "Projected group fixtures",
+      localKickoff: null
+    };
+  });
 }
 
 export function findNearestHostCity(city, coordinates = null) {
@@ -177,6 +238,15 @@ export function buildMatchPlan({
   if (selectedMode === "follow_team") {
     exactMatches = sourceMatches.filter((match) => teamMatches(match, favoriteTeam));
     selectedCity = exactMatches[0]?.city || canonicalCityName(destinationCity || originCity);
+    if (exactMatches.length < 2) {
+      const inferred = inferredMatchesForTeam({ favoriteTeam, departureDate, endDate });
+      const existingIds = new Set(exactMatches.map((match) => match.id));
+      const merged = [...exactMatches, ...inferred.filter((match) => !existingIds.has(match.id))];
+      exactMatches = merged.sort((a, b) =>
+        `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`)
+      );
+      selectedCity = exactMatches[0]?.city || selectedCity;
+    }
     if (!exactMatches.length) {
       const teamMatchesOutsideRange = allMatchesSorted.filter((match) => teamMatches(match, favoriteTeam));
       notice = {

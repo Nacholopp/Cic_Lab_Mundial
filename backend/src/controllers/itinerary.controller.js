@@ -5,6 +5,7 @@ import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
+import { addDays } from "../utils/date.utils.js";
 
 function normalizeText(value = "") {
   return value
@@ -81,6 +82,18 @@ async function buildFollowTeamRoute({
       departureDate: dateMinusDays(currentMatch.date, 1),
       originAirport: null,
       destinationAirport: null
+    });
+  }
+
+  const lastMatch = sortedMatches[sortedMatches.length - 1];
+  if (normalizeText(lastMatch.city) !== normalizeText(originCity)) {
+    stops.push({
+      fromCity: lastMatch.city,
+      toCity: originCity,
+      matchId: `${lastMatch.id}-return`,
+      departureDate: addDays(lastMatch.date, 1),
+      originAirport: null,
+      destinationAirport: originAirport
     });
   }
 

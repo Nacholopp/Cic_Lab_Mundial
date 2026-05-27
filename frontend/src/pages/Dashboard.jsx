@@ -25,8 +25,11 @@ export default function Dashboard() {
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
   const isLocalPlan = profile.mode === "stay_origin";
+  const isFollowTeamPlan = profile.mode === "follow_team";
+  const isTravelCityPlan = profile.mode === "travel_city";
   const effectiveDestinationCity =
     plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
+  const followTeamLegs = plan?.followTeamRoute?.legs || [];
 
   useEffect(() => {
     let active = true;
@@ -78,7 +81,9 @@ export default function Dashboard() {
             <p className="mt-4 max-w-2xl text-base font-medium text-white/85 sm:text-lg">
               {isLocalPlan
                 ? `Partidos, horarios y sitios para ver el Mundial en ${profile.originCity}.`
-                : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${effectiveDestinationCity}, con vuelos, ruta, clima y contexto de selecciones en una sola vista.`}
+                : isTravelCityPlan
+                  ? `Plan de viaje a ${effectiveDestinationCity}: vuelos, horarios de partidos, clima y zonas clave alrededor de la sede.`
+                  : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${effectiveDestinationCity}, con vuelos, ruta y seguimiento completo de partidos.`}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -111,11 +116,13 @@ export default function Dashboard() {
       </section>
 
       <div className="mx-auto mt-3 max-w-7xl px-4">
-        <section className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
-            <p className="text-xs font-bold uppercase text-slate-500">Seleccion</p>
-            <p className="mt-1 text-2xl font-black">{profile.favoriteTeam}</p>
-          </div>
+        <section className={`grid gap-4 ${isTravelCityPlan ? "md:grid-cols-3" : "md:grid-cols-4"}`}>
+          {!isTravelCityPlan && (
+            <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
+              <p className="text-xs font-bold uppercase text-slate-500">Seleccion</p>
+              <p className="mt-1 text-2xl font-black">{profile.favoriteTeam || "Mundial 2026"}</p>
+            </div>
+          )}
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">{isLocalPlan ? "Ciudad" : "Destino"}</p>
             <p className="mt-1 text-2xl font-black">{isLocalPlan ? profile.originCity : effectiveDestinationCity}</p>
@@ -237,7 +244,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {!isLocalPlan && (
+        {!isLocalPlan && !isFollowTeamPlan && (
           <section className="mt-4 grid gap-4 md:grid-cols-3">
             <FlightCard label="Mas barato" flight={plan.flights.cheapest} />
             <FlightCard label="Mas rapido" flight={plan.flights.fastest} />
@@ -272,6 +279,49 @@ export default function Dashboard() {
           </section>
         )}
 
+        {isFollowTeamPlan && plan.matches?.length > 0 && (
+          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="text-lg font-black">Calendario para seguir a tu seleccion</h2>
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              Donde, cuando y como ver cada partido dentro del rango elegido.
+            </p>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {plan.matches.map((match, index) => {
+                const leg = followTeamLegs[index] || null;
+                return (
+                  <article key={match.id} className="overflow-hidden rounded-md border border-slate-200">
+                    <img
+                      src={match.thumbnail || stadiumImage}
+                      alt={`${match.homeTeam} vs ${match.awayTeam}`}
+                      className="h-36 w-full object-cover"
+                    />
+                    <div className="space-y-2 p-3">
+                      <p className="text-sm font-black text-slate-950">
+                        {match.homeTeam} vs {match.awayTeam}
+                      </p>
+                      <p className="text-sm font-medium text-slate-700">
+                        {match.localKickoff || `${match.date} ${match.timeUtc?.slice(0, 5) || ""} UTC`}
+                      </p>
+                      <p className="text-sm font-semibold text-slate-700">
+                        {match.city} - {match.venue || "Estadio por confirmar"}
+                      </p>
+                      {leg?.recommended ? (
+                        <p className="text-sm font-medium text-slate-600">
+                          Como llegar: vuelo sugerido {leg.fromCity} a {leg.toCity}, {leg.recommended.price} {leg.recommended.currency}, {leg.recommended.stops} escalas.
+                        </p>
+                      ) : (
+                        <p className="text-sm font-medium text-slate-600">
+                          Como verlo: llega con antelacion al estadio y confirma transporte local 24h antes.
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Timeline items={plan.itinerary} />
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -298,9 +348,11 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="mt-8">
-          <TeamShowcase />
-        </section>
+        {!isTravelCityPlan && (
+          <section className="mt-8">
+            <TeamShowcase />
+          </section>
+        )}
 
         <GroupMatchups />
       </div>
