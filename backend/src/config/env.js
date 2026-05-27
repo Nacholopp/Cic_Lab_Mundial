@@ -29,5 +29,12 @@ export const env = {
   timeApiBaseUrl: process.env.TIME_API_BASE_URL || "https://timeapi.bio/timeapi/time",
   openWeatherApiKey: process.env.OPENWEATHER_API_KEY || "",
   openWeatherBaseUrl:
-    process.env.OPENWEATHER_BASE_URL || "https://api.openweathermap.org/data/2.5/weather"
+    process.env.OPENWEATHER_BASE_URL || "https://api.openweathermap.org/data/2.5/weather",
+  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
+  googlePlacesBaseUrl:
+    process.env.GOOGLE_PLACES_BASE_URL || "https://places.googleapis.com/v1",
+  geoapifyApiKey: process.env.GEOAPIFY_API_KEY || "",
+  geoapifyBaseUrl: process.env.GEOAPIFY_BASE_URL || "https://api.geoapify.com/v2",
+  openTripMapApiKey: process.env.OPENTRIPMAP_API_KEY || "",
+  openTripMapBaseUrl: process.env.OPENTRIPMAP_BASE_URL || "https://api.opentripmap.com/0.1/en/places"
 };

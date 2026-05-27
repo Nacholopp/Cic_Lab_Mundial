@@ -3,6 +3,7 @@ import Onboarding from "../pages/Onboarding.jsx";
 import Dashboard from "../pages/Dashboard.jsx";
 import MapView from "../pages/MapView.jsx";
 import Itinerary from "../pages/Itinerary.jsx";
+import Attractions from "../pages/Attractions.jsx";
 
 export default function AppRouter() {
   return (
@@ -12,6 +13,7 @@ export default function AppRouter() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/map" element={<MapView />} />
         <Route path="/itinerary" element={<Itinerary />} />
+        <Route path="/attractions" element={<Attractions />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

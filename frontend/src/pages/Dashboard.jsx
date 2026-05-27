@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { CalendarDays, CloudSun, Map, MapPin, Trophy, Tv, X } from "lucide-react";
+import { CalendarDays, CloudSun, Landmark, Map, MapPin, Trophy, Tv, X } from "lucide-react";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import WorldMap from "../components/WorldMap.jsx";
@@ -92,6 +92,13 @@ export default function Dashboard() {
                 <Map size={18} />
                 Mapa
               </Link>
+              <Link
+                className="inline-flex items-center gap-2 rounded-md border border-white/50 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur"
+                to="/attractions"
+              >
+                <Landmark size={18} />
+                Zonas que ver
+              </Link>
             </div>
             <div className="mt-4">
               <OptionMenu currentMode={profile.mode} />
@@ -147,6 +154,23 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
+            {!isLocalPlan && plan.destinationGuide && (
+              <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Landmark size={19} className="text-brandRed" />
+                  <h2 className="text-lg font-black">Zonas que ver</h2>
+                </div>
+                <p className="mt-2 text-sm font-medium text-slate-600">
+                  {plan.destinationGuide.city}: turismo, restaurantes y rutas alrededor de {plan.destinationGuide.stadium || "la sede"}.
+                </p>
+                <Link
+                  to="/attractions"
+                  className="mt-3 inline-flex items-center gap-2 rounded-md bg-brandBlue px-3 py-2 text-sm font-black text-white"
+                >
+                  Abrir guia
+                </Link>
+              </div>
+            )}
           </div>
         </section>
 
@@ -179,6 +203,9 @@ export default function Dashboard() {
             title={plan.matchPlan?.hasExactMatches ? matchTitles[profile.mode] || "Partidos seleccionados" : "Opciones similares"}
             emptyText="No hay partidos que encajen con esta busqueda."
           />
+          {plan.dataSources?.matches && (
+            <p className="mt-2 text-xs font-semibold text-slate-500">Fuente de calendario: {plan.dataSources.matches}</p>
+          )}
         </section>
 
         {isLocalPlan && (

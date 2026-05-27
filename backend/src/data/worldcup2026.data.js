@@ -1,20 +1,20 @@
 export const hostCities = [
-  { name: "Atlanta", stadium: "Mercedes-Benz Stadium", country: "US", lat: 33.7554, lon: -84.4008 },
-  { name: "Boston", stadium: "Gillette Stadium", country: "US", lat: 42.0909, lon: -71.2643 },
-  { name: "Dallas", stadium: "AT&T Stadium", country: "US", lat: 32.7473, lon: -97.0945 },
-  { name: "Guadalajara", stadium: "Estadio Akron", country: "MX", lat: 20.6818, lon: -103.4624 },
-  { name: "Houston", stadium: "NRG Stadium", country: "US", lat: 29.6847, lon: -95.4107 },
-  { name: "Kansas City", stadium: "Arrowhead Stadium", country: "US", lat: 39.0489, lon: -94.4839 },
-  { name: "Los Angeles", stadium: "SoFi Stadium", country: "US", lat: 33.9535, lon: -118.3392 },
-  { name: "Mexico City", stadium: "Estadio Azteca", country: "MX", lat: 19.3029, lon: -99.1505 },
-  { name: "Miami", stadium: "Hard Rock Stadium", country: "US", lat: 25.958, lon: -80.2389 },
-  { name: "Monterrey", stadium: "Estadio BBVA", country: "MX", lat: 25.668, lon: -100.2442 },
-  { name: "New York/New Jersey", stadium: "MetLife Stadium", country: "US", lat: 40.8135, lon: -74.0745 },
-  { name: "Philadelphia", stadium: "Lincoln Financial Field", country: "US", lat: 39.9008, lon: -75.1675 },
-  { name: "San Francisco Bay Area", stadium: "Levi's Stadium", country: "US", lat: 37.403, lon: -121.97 },
-  { name: "Seattle", stadium: "Lumen Field", country: "US", lat: 47.5952, lon: -122.3316 },
-  { name: "Toronto", stadium: "BMO Field", country: "CA", lat: 43.6332, lon: -79.4186 },
-  { name: "Vancouver", stadium: "BC Place", country: "CA", lat: 49.2768, lon: -123.1119 }
+  { name: "Atlanta", stadium: "Mercedes-Benz Stadium", country: "US", lat: 33.7554, lon: -84.4008, timezone: "America/New_York" },
+  { name: "Boston", stadium: "Gillette Stadium", country: "US", lat: 42.0909, lon: -71.2643, timezone: "America/New_York" },
+  { name: "Dallas", stadium: "AT&T Stadium", country: "US", lat: 32.7473, lon: -97.0945, timezone: "America/Chicago" },
+  { name: "Guadalajara", stadium: "Estadio Akron", country: "MX", lat: 20.6818, lon: -103.4624, timezone: "America/Mexico_City" },
+  { name: "Houston", stadium: "NRG Stadium", country: "US", lat: 29.6847, lon: -95.4107, timezone: "America/Chicago" },
+  { name: "Kansas City", stadium: "Arrowhead Stadium", country: "US", lat: 39.0489, lon: -94.4839, timezone: "America/Chicago" },
+  { name: "Los Angeles", stadium: "SoFi Stadium", country: "US", lat: 33.9535, lon: -118.3392, timezone: "America/Los_Angeles" },
+  { name: "Mexico City", stadium: "Estadio Azteca", country: "MX", lat: 19.3029, lon: -99.1505, timezone: "America/Mexico_City" },
+  { name: "Miami", stadium: "Hard Rock Stadium", country: "US", lat: 25.958, lon: -80.2389, timezone: "America/New_York" },
+  { name: "Monterrey", stadium: "Estadio BBVA", country: "MX", lat: 25.668, lon: -100.2442, timezone: "America/Monterrey" },
+  { name: "New York/New Jersey", stadium: "MetLife Stadium", country: "US", lat: 40.8135, lon: -74.0745, timezone: "America/New_York" },
+  { name: "Philadelphia", stadium: "Lincoln Financial Field", country: "US", lat: 39.9008, lon: -75.1675, timezone: "America/New_York" },
+  { name: "San Francisco Bay Area", stadium: "Levi's Stadium", country: "US", lat: 37.403, lon: -121.97, timezone: "America/Los_Angeles" },
+  { name: "Seattle", stadium: "Lumen Field", country: "US", lat: 47.5952, lon: -122.3316, timezone: "America/Los_Angeles" },
+  { name: "Toronto", stadium: "BMO Field", country: "CA", lat: 43.6332, lon: -79.4186, timezone: "America/Toronto" },
+  { name: "Vancouver", stadium: "BC Place", country: "CA", lat: 49.2768, lon: -123.1119, timezone: "America/Vancouver" }
 ];
 
 export const fallbackWorldCupMatches = [

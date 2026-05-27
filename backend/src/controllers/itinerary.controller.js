@@ -3,6 +3,7 @@ import { rankFlights, buildItinerary, explainRecommendation } from "../services/
 import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
+import { getDestinationGuide } from "../services/places.service.js";
 
 function buildWatchSpots(city) {
   return [
@@ -119,6 +120,10 @@ export async function buildTravelPlan(req, res) {
   const recommendedPrice = rankedFlights.recommended?.price || 0;
   const estimatedTotalCost = recommendedPrice * adults;
   const watchSpots = mode === "stay_origin" ? buildWatchSpots(originCity) : [];
+  const destinationGuide = await getDestinationGuide({
+    city: effectiveDestinationCity,
+    originCity
+  });
   const budgetStatus =
     budget == null
       ? "no_budget_provided"
@@ -155,6 +160,11 @@ export async function buildTravelPlan(req, res) {
     recommendationText,
     weather,
     weatherError,
+    destinationGuide,
+    dataSources: {
+      matches: "TheSportsDB league 4429 with fallback World Cup 2026 seed",
+      maps: destinationGuide.dataSources
+    },
     costs: {
       estimatedTotalCost,
       currency: rankedFlights.recommended?.currency || "USD",

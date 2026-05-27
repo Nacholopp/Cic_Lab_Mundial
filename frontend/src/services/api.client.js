@@ -34,3 +34,9 @@ export function fetchMatches() {
 export function fetchCurrentTime(timezone = "Europe/Madrid") {
   return request(`/time?timezone=${encodeURIComponent(timezone)}`);
 }
+
+export function fetchDestinationGuide(city, originCity = "") {
+  const params = new URLSearchParams({ city });
+  if (originCity) params.set("originCity", originCity);
+  return request(`/places/destination?${params.toString()}`);
+}

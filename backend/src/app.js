@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js
 import authRoutes from "./routes/auth.routes.js";
 import flightsRoutes from "./routes/flights.routes.js";
 import matchesRoutes from "./routes/matches.routes.js";
+import placesRoutes from "./routes/places.routes.js";
 import timeRoutes from "./routes/time.routes.js";
 import itineraryRoutes from "./routes/itinerary.routes.js";
 
@@ -28,6 +29,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/flights", flightsRoutes);
 app.use("/api/matches", matchesRoutes);
+app.use("/api/places", placesRoutes);
 app.use("/api/time", timeRoutes);
 app.use("/api/itinerary", itineraryRoutes);
 

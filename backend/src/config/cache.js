@@ -10,7 +10,12 @@ if (env.redisUrl) {
   redisClient = new Redis(env.redisUrl, {
     lazyConnect: true,
     maxRetriesPerRequest: 1,
-    enableOfflineQueue: false
+    enableOfflineQueue: false,
+    retryStrategy: null
+  });
+
+  redisClient.on("error", () => {
+    redisEnabled = false;
   });
 
   redisClient
@@ -21,6 +26,7 @@ if (env.redisUrl) {
     })
     .catch(() => {
       redisEnabled = false;
+      redisClient.disconnect();
       console.warn("Redis unavailable, using in-memory cache");
     });
 }

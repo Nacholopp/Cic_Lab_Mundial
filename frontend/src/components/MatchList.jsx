@@ -39,7 +39,7 @@ export default function MatchList({ matches, title = "Partidos", emptyText = "Si
               </span>
               <span className="inline-flex items-center gap-2">
                 <Clock size={16} className="text-brandRed" />
-                {formatTime(match.timeUtc)}
+                {match.localKickoff || formatTime(match.timeUtc)}
               </span>
               <span className="inline-flex items-center gap-2">
                 <MapPin size={16} className="text-brandRed" />

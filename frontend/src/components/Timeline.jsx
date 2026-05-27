@@ -19,6 +19,7 @@ export default function Timeline({ items }) {
             <p className="text-sm text-slate-600">
               {item.date} - {item.location}
             </p>
+            {item.venue && <p className="text-sm font-semibold text-slate-700">{item.venue}</p>}
             <p className="text-sm text-slate-600">{item.note}</p>
           </li>
         ))}

@@ -58,6 +58,12 @@ export function rankFlights(offers, preferences) {
   };
 }
 
+function matchTimeLabel(match) {
+  if (match.localKickoff) return `Saque inicial local: ${match.localKickoff}`;
+  if (match.timeUtc) return `Saque inicial: ${match.timeUtc.slice(0, 5)} UTC`;
+  return "Horario pendiente de confirmacion oficial.";
+}
+
 export function buildItinerary(matches, originCity, destinationCity, mode = "travel_city") {
   const selectedMatches = (matches || []).slice(0, 6);
   return selectedMatches.map((match, index) => ({
@@ -65,12 +71,14 @@ export function buildItinerary(matches, originCity, destinationCity, mode = "tra
     date: match.date,
     location: match.city || destinationCity || "TBD",
     title: `${match.homeTeam} vs ${match.awayTeam}`,
+    time: match.localKickoff || match.timeUtc || null,
+    venue: match.venue || null,
     note:
       mode === "stay_origin"
-        ? `${match.venue || "Estadio por confirmar"} en ${match.city || destinationCity}.`
+        ? `${matchTimeLabel(match)}. Planifica verlo en tu ciudad con margen para posibles cambios de TV.`
         : index === 0
-          ? `Desplazamiento desde ${originCity} a ${destinationCity}.`
-          : "Dia dedicado al partido y desplazamiento local."
+          ? `Desplazamiento desde ${originCity} a ${destinationCity}. ${matchTimeLabel(match)}. Llegada recomendada al menos un dia antes si el vuelo no es directo.`
+          : `${matchTimeLabel(match)}. Dia dedicado al partido, comida cerca del estadio y desplazamiento local.`
   }));
 }
 
