@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Flag, Home, MapPinned, Plane, Shield, Trophy, Users } from "lucide-react";
 import AirportPicker from "../components/AirportPicker.jsx";
 import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import NewsMagazine from "../components/NewsMagazine.jsx";
@@ -11,7 +11,6 @@ import { usePlannerStore } from "../store/planner.store.js";
 import { newsCountryOptions } from "../data/newsSources.js";
 import { fifa26Logo, heroImage } from "../data/worldCupVisuals.js";
 
-const prefOptions = ["barato", "comodo", "rapido", "futbol", "turismo"];
 const budgetRanges = [
   { label: "Sin limite", value: "" },
   { label: "Hasta 500 USD/persona", value: "500" },
@@ -65,9 +64,14 @@ export default function Onboarding() {
     maxStops: profile?.maxStops ?? 1,
     departureDate: profile?.departureDate || "",
     adults: profile?.adults || 1,
-    country: "ES",
-    preferences: profile?.preferences || ["barato", "futbol"]
+    country: "ES"
   });
+  const [planMenuOpen, setPlanMenuOpen] = useState(false);
+  const selectedPlan = useMemo(
+    () => flowOptions.find((option) => option.value === form.mode) || flowOptions[1],
+    [form.mode]
+  );
+  const SelectedPlanIcon = selectedPlan.icon;
 
   const canSubmit = useMemo(
     () => {
@@ -83,15 +87,6 @@ export default function Onboarding() {
   const updateField = (event) => {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const togglePreference = (pref) => {
-    setForm((prev) => ({
-      ...prev,
-      preferences: prev.preferences.includes(pref)
-        ? prev.preferences.filter((x) => x !== pref)
-        : [...prev.preferences, pref]
-    }));
   };
 
   const submit = async (event) => {
@@ -115,7 +110,7 @@ export default function Onboarding() {
         destinationAirport: form.mode === "travel_city" ? form.destinationAirport : null,
         cabinClass: form.cabinClass,
         maxStops: Number(form.maxStops),
-        preferences: form.preferences
+        preferences: []
       };
       const response = await buildPlan(payload);
       setCountry(form.country);
@@ -131,14 +126,14 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/92 px-4 py-3 text-white shadow-2xl backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-3">
-          <NewspaperDropdown country={form.country} />
+      <header className="sticky top-0 z-50 border-b border-cyan-200/15 bg-[#061b2d]/78 px-4 py-3 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
+        <div className="flex w-full items-center gap-3">
+          <NewspaperDropdown country={form.country} variant="glass" />
           <a
             href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
             target="_blank"
             rel="noreferrer"
-            className="flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/25 sm:h-16 sm:w-12"
+            className="ml-auto flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-100/25 sm:h-16 sm:w-12"
             title="FIFA World Cup 26"
           >
             <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
@@ -150,7 +145,7 @@ export default function Onboarding() {
         <img src={heroImage} alt="Estadio mundialista" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-slate-950/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-slate-950/20" />
-        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_440px] lg:items-center">
+        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(560px,660px)] lg:items-center">
           <div className="py-10 lg:py-20">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em] backdrop-blur">
               <Trophy size={15} />
@@ -181,13 +176,29 @@ export default function Onboarding() {
             </div>
           </div>
 
-          <form className="rounded-lg border border-white/30 bg-white p-5 text-slate-950 shadow-2xl" onSubmit={submit}>
-            <h2 className="text-xl font-black">Crea tu plan</h2>
-            <p className="mt-1 text-sm text-slate-600">Elige como quieres vivir el Mundial y cambia de opcion cuando quieras.</p>
-            <div className="mt-5 grid gap-4">
-              <fieldset>
-                <legend className="text-sm font-bold">Tipo de plan</legend>
-                <div className="mt-2 grid gap-2">
+          <form
+            className="rounded-lg border border-cyan-100/35 bg-gradient-to-br from-white/20 via-cyan-200/10 to-slate-950/45 p-5 text-white shadow-[0_28px_90px_rgba(8,145,178,0.28)] ring-1 ring-cyan-100/25 backdrop-blur-2xl"
+            onSubmit={submit}
+          >
+            <h2 className="text-2xl font-black">Crea tu plan</h2>
+            <p className="mt-1 text-sm font-semibold text-white/70">Elige como quieres vivir el Mundial y cambia de opcion cuando quieras.</p>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="relative md:col-span-2">
+                <label className="text-sm font-bold">Tipo de plan</label>
+                <button
+                  type="button"
+                  className="mt-1 flex min-h-16 w-full items-center gap-3 rounded-md border border-white/20 bg-white/85 p-3 text-left text-slate-950 shadow-sm outline-none transition hover:bg-white focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
+                  onClick={() => setPlanMenuOpen((current) => !current)}
+                >
+                  <SelectedPlanIcon className="shrink-0 text-brandBlue" size={22} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black">{selectedPlan.label}</span>
+                    <span className="mt-1 block text-xs font-semibold text-slate-500">{selectedPlan.description}</span>
+                  </span>
+                  <ChevronDown className={`shrink-0 text-slate-500 transition ${planMenuOpen ? "rotate-180" : ""}`} size={19} />
+                </button>
+                {planMenuOpen && (
+                  <div className="absolute left-0 right-0 z-30 mt-2 grid gap-2 rounded-lg border border-white/25 bg-slate-950/80 p-2 shadow-2xl shadow-slate-950/40 backdrop-blur-xl md:grid-cols-3">
                   {flowOptions.map((option) => {
                     const Icon = option.icon;
                     const selected = form.mode === option.value;
@@ -195,23 +206,29 @@ export default function Onboarding() {
                       <button
                         key={option.value}
                         type="button"
-                        className={`flex min-h-16 items-start gap-3 rounded-md border p-3 text-left transition ${
+                        className={`flex min-h-24 items-start gap-3 rounded-md border p-3 text-left transition ${
                           selected
-                            ? "border-brandBlue bg-blue-50 text-slate-950 ring-2 ring-brandBlue/15"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-brandBlue/60"
+                            ? "border-cyan-200 bg-white text-slate-950 ring-2 ring-cyan-200/20"
+                            : "border-white/10 bg-white/10 text-white hover:border-cyan-200/50 hover:bg-white/15"
                         }`}
-                        onClick={() => setForm((prev) => ({ ...prev, mode: option.value }))}
+                        onClick={() => {
+                          setForm((prev) => ({ ...prev, mode: option.value }));
+                          setPlanMenuOpen(false);
+                        }}
                       >
-                        <Icon className={selected ? "text-brandBlue" : "text-slate-500"} size={20} />
+                        <Icon className={selected ? "text-brandBlue" : "text-cyan-100"} size={20} />
                         <span>
                           <span className="block text-sm font-black">{option.label}</span>
-                          <span className="mt-1 block text-xs font-medium text-slate-500">{option.description}</span>
+                          <span className={`mt-1 block text-xs font-medium ${selected ? "text-slate-500" : "text-white/65"}`}>
+                            {option.description}
+                          </span>
                         </span>
                       </button>
                     );
                   })}
-                </div>
-              </fieldset>
+                  </div>
+                )}
+              </div>
               {form.mode === "follow_team" && (
                 <TeamCountrySelect
                   value={form.favoriteTeam}
@@ -221,7 +238,7 @@ export default function Onboarding() {
           <label className="text-sm font-bold">
             Ciudad origen
             <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+              className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="originCity"
               value={form.originCity}
               onChange={(event) =>
@@ -263,7 +280,7 @@ export default function Onboarding() {
             />
           )}
           {form.mode === "stay_origin" && (
-            <p className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600">
+            <p className="rounded-md border border-white/15 bg-white/15 px-3 py-2 text-sm font-semibold text-white/75 md:col-span-2">
               Usaremos tu ciudad de origen para proponerte horarios de partidos y sitios donde verlos. No necesitas fecha de salida.
             </p>
           )}
@@ -272,7 +289,7 @@ export default function Onboarding() {
               Fecha de salida
               <input
                 type="date"
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
                 name="departureDate"
                 value={form.departureDate}
                 onChange={updateField}
@@ -280,11 +297,10 @@ export default function Onboarding() {
               />
             </label>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">
             Presupuesto por persona
             <select
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+              className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="budget"
               value={form.budget}
               onChange={updateField}
@@ -301,19 +317,18 @@ export default function Onboarding() {
             <input
               type="number"
               min="1"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+              className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="adults"
               value={form.adults}
               onChange={updateField}
             />
           </label>
-          </div>
           {form.mode !== "stay_origin" && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <>
               <label className="text-sm font-bold">
                 Clase de cabina
                 <select
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                  className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
                   name="cabinClass"
                   value={form.cabinClass}
                   onChange={updateField}
@@ -328,7 +343,7 @@ export default function Onboarding() {
               <label className="text-sm font-bold">
                 Escalas maximas
                 <select
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+                  className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
                   name="maxStops"
                   value={form.maxStops}
                   onChange={updateField}
@@ -338,12 +353,12 @@ export default function Onboarding() {
                   <option value="2">Hasta 2 escalas</option>
                 </select>
               </label>
-            </div>
+            </>
           )}
-          <label className="text-sm font-bold">
+          <label className="text-sm font-bold md:col-span-2">
             Pais para periodico
             <select
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 font-medium outline-none transition focus:border-brandBlue focus:ring-2 focus:ring-brandBlue/20"
+              className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="country"
               value={form.country}
               onChange={updateField}
@@ -355,34 +370,12 @@ export default function Onboarding() {
               ))}
             </select>
           </label>
-          <fieldset>
-            <legend className="text-sm font-bold">Preferencias</legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {prefOptions.map((pref) => {
-                const selected = form.preferences.includes(pref);
-                return (
-                  <button
-                    key={pref}
-                    type="button"
-                    className={`rounded-full border px-3 py-1 text-sm font-bold ${
-                      selected
-                        ? "border-brandBlue bg-brandBlue text-white"
-                        : "border-slate-300 bg-white text-slate-700"
-                    }`}
-                    onClick={() => togglePreference(pref)}
-                  >
-                    {pref}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
 
-          {error && <p className="text-sm font-semibold text-red-700">{error}</p>}
+          {error && <p className="text-sm font-semibold text-red-200 md:col-span-2">{error}</p>}
           <button
             type="submit"
             disabled={!canSubmit || loading}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-brandBlue px-4 text-sm font-black text-white transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-cyan-200 px-4 text-sm font-black text-slate-950 transition hover:bg-white disabled:cursor-not-allowed disabled:bg-white/25 disabled:text-white/60 md:col-span-2"
           >
             {profile && <ArrowLeft size={18} />}
             {loading ? "Generando plan..." : "Generar plan"}

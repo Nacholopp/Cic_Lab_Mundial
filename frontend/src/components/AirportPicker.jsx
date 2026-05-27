@@ -65,7 +65,7 @@ export default function AirportPicker({ city, label, value, onChange }) {
       <div className="mt-1 flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 focus-within:border-brandBlue focus-within:ring-2 focus-within:ring-brandBlue/20">
         {loading ? <Search size={17} className="animate-pulse text-slate-400" /> : <Plane size={17} className="text-slate-400" />}
         <select
-          className="w-full bg-transparent text-sm font-semibold outline-none"
+          className="w-full bg-transparent text-sm font-semibold text-slate-950 outline-none"
           value={selectedValue}
           onChange={handleChange}
           disabled={!airports.length || loading}
