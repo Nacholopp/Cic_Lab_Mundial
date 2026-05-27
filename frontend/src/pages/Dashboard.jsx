@@ -21,7 +21,7 @@ const matchTitles = {
 };
 
 export default function Dashboard() {
-  const { plan, profile, country } = usePlannerStore();
+  const { plan, profile, country, authUser, authToken, setAuthSession, clearAuthSession } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
   const isLocalPlan = profile.mode === "stay_origin";
@@ -57,7 +57,13 @@ export default function Dashboard() {
           <header className="relative z-10 flex items-center justify-between gap-3">
             <NewspaperDropdown country={country} />
             <div className="flex shrink-0 items-center gap-3">
-              <ProfileDropdown profile={profile} />
+              <ProfileDropdown
+                profile={profile}
+                authUser={authUser}
+                authToken={authToken}
+                onLoginSuccess={setAuthSession}
+                onLogout={clearAuthSession}
+              />
               <a
                 href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
                 target="_blank"

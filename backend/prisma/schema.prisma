@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile   Profile?
+  id         String      @id @default(cuid())
+  username   String      @unique
+  email      String      @unique
+  password   String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  profile    Profile?
+  itineraries Itinerary[]
 }
 
 model Profile {
@@ -59,6 +61,7 @@ model Itinerary {
   departureDate DateTime
   totalCost     Float?
   createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Flight {

@@ -5,6 +5,7 @@ import AirportPicker from "../components/AirportPicker.jsx";
 import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import NewsMagazine from "../components/NewsMagazine.jsx";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
+import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
@@ -49,7 +50,20 @@ const flowOptions = [
 export default function Onboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile, setProfile, setPlan, setError, setLoading, loading, error, setCountry } = usePlannerStore();
+  const {
+    profile,
+    authUser,
+    authToken,
+    setProfile,
+    setPlan,
+    setError,
+    setLoading,
+    loading,
+    error,
+    setCountry,
+    setAuthSession,
+    clearAuthSession
+  } = usePlannerStore();
   const initialMode = searchParams.get("mode") || profile?.mode || "travel_city";
 
   const [form, setForm] = useState({
@@ -118,7 +132,7 @@ export default function Onboarding() {
         maxStops: Number(form.maxStops),
         preferences: []
       };
-      const response = await buildPlan(payload);
+      const response = await buildPlan(payload, authToken);
       setCountry(form.country);
       setProfile(response.profile || payload);
       setPlan(response);
@@ -135,11 +149,20 @@ export default function Onboarding() {
       <header className="sticky top-0 z-50 border-b border-cyan-200/15 bg-[#061b2d]/78 px-4 py-3 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
         <div className="flex w-full items-center gap-3">
           <NewspaperDropdown country={form.country} variant="glass" />
+          <div className="ml-auto">
+            <ProfileDropdown
+              profile={profile}
+              authUser={authUser}
+              authToken={authToken}
+              onLoginSuccess={setAuthSession}
+              onLogout={clearAuthSession}
+            />
+          </div>
           <a
             href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
             target="_blank"
             rel="noreferrer"
-            className="ml-auto flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-100/25 sm:h-16 sm:w-12"
+            className="flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-100/25 sm:h-16 sm:w-12"
             title="FIFA World Cup 26"
           >
             <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />

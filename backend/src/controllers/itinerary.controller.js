@@ -6,6 +6,7 @@ import { getWeatherByCity } from "../services/weather.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
 import { addDays } from "../utils/date.utils.js";
+import { prisma } from "../config/prisma.js";
 
 function normalizeText(value = "") {
   return value
@@ -170,6 +171,29 @@ function buildWatchSpots(city) {
   ];
 }
 
+async function saveItineraryForUser({
+  userId,
+  mode,
+  originCity,
+  destinationCity,
+  departureDate,
+  totalCost
+}) {
+  if (!userId || mode === "stay_origin" || !departureDate || !destinationCity) return null;
+
+  const created = await prisma.itinerary.create({
+    data: {
+      userId,
+      originCity,
+      destination: destinationCity,
+      departureDate: new Date(`${departureDate}T00:00:00Z`),
+      totalCost: totalCost || null
+    },
+    select: { id: true }
+  });
+  return created.id;
+}
+
 export async function buildTravelPlan(req, res) {
   const {
     mode = "travel_city",
@@ -296,6 +320,15 @@ export async function buildTravelPlan(req, res) {
         ? "within_budget"
         : "over_budget";
 
+  const savedItineraryId = await saveItineraryForUser({
+    userId: req.authUser?.id || null,
+    mode,
+    originCity,
+    destinationCity: effectiveDestinationCity,
+    departureDate,
+    totalCost: estimatedTotalCost
+  });
+
   res.json({
     ok: true,
     profile: {
@@ -339,6 +372,25 @@ export async function buildTravelPlan(req, res) {
       estimatedTotalCost,
       currency: rankedFlights.recommended?.currency || "USD",
       budgetStatus
-    }
+    },
+    savedItineraryId
+  });
+}
+
+export async function listMyItineraries(req, res) {
+  const userId = req.authUser?.id;
+  if (!userId) {
+    return res.status(401).json({ ok: false, error: "Authentication required" });
+  }
+
+  const itineraries = await prisma.itinerary.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 30
+  });
+
+  return res.json({
+    ok: true,
+    itineraries
   });
 }
