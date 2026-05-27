@@ -4,6 +4,135 @@ import { buildMatchPlan } from "../services/match-planner.service.js";
 import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
+import { hostCities } from "../data/worldcup2026.data.js";
+
+function normalizeText(value = "") {
+  return value
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function hostCityByName(city) {
+  const target = normalizeText(city);
+  return hostCities.find((item) => normalizeText(item.name) === target) || null;
+}
+
+const knownCityCoordinates = new Map([
+  ["madrid", { lat: 40.4168, lon: -3.7038 }],
+  ["barcelona", { lat: 41.3874, lon: 2.1686 }],
+  ["paris", { lat: 48.8566, lon: 2.3522 }],
+  ["london", { lat: 51.5072, lon: -0.1276 }]
+]);
+
+function cityCoordinates(city) {
+  const hostCity = hostCityByName(city);
+  if (hostCity?.lat && hostCity?.lon) return { lat: hostCity.lat, lon: hostCity.lon };
+  return knownCityCoordinates.get(normalizeText(city)) || null;
+}
+
+function dateMinusDays(isoDate, days) {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
+async function buildFollowTeamRoute({
+  matches,
+  originCity,
+  adults,
+  cabinClass,
+  maxStops,
+  originAirport,
+  destinationAirport,
+  preferences
+}) {
+  const sortedMatches = [...matches].sort((a, b) => `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`));
+  if (!sortedMatches.length) {
+    return {
+      routeFlights: [],
+      routeSegments: [],
+      combinedOffers: []
+    };
+  }
+
+  const stops = [];
+  const first = sortedMatches[0];
+  stops.push({
+    fromCity: originCity,
+    toCity: first.city,
+    matchId: first.id,
+    departureDate: dateMinusDays(first.date, 1),
+    originAirport,
+    destinationAirport
+  });
+
+  for (let index = 1; index < sortedMatches.length; index += 1) {
+    const previousMatch = sortedMatches[index - 1];
+    const currentMatch = sortedMatches[index];
+    if (normalizeText(previousMatch.city) === normalizeText(currentMatch.city)) continue;
+
+    stops.push({
+      fromCity: previousMatch.city,
+      toCity: currentMatch.city,
+      matchId: currentMatch.id,
+      departureDate: dateMinusDays(currentMatch.date, 1),
+      originAirport: null,
+      destinationAirport: null
+    });
+  }
+
+  const routeFlights = [];
+  const combinedOffers = [];
+
+  for (const stop of stops) {
+    try {
+      const search = await getFlexibleFlightOffers({
+        originCity: stop.fromCity,
+        destinationCity: stop.toCity,
+        departureDate: stop.departureDate,
+        adults,
+        cabinClass,
+        maxStops,
+        originAirport: stop.originAirport,
+        destinationAirport: stop.destinationAirport
+      });
+      const ranked = rankFlights(search.offers, preferences);
+      if (ranked.recommended) {
+        routeFlights.push({
+          ...stop,
+          recommended: ranked.recommended,
+          cheapest: ranked.cheapest,
+          fastest: ranked.fastest
+        });
+      }
+      combinedOffers.push(...search.offers);
+    } catch {
+      routeFlights.push({
+        ...stop,
+        recommended: null,
+        cheapest: null,
+        fastest: null
+      });
+    }
+  }
+
+  const routeSegments = routeFlights.map((flight, index) => {
+    return {
+      id: `${index + 1}-${flight.fromCity}-${flight.toCity}`,
+      fromCity: flight.fromCity,
+      toCity: flight.toCity,
+      fromCoordinates: cityCoordinates(flight.fromCity),
+      toCoordinates: cityCoordinates(flight.toCity),
+      departureDate: flight.departureDate,
+      flight: flight.recommended
+    };
+  });
+
+  return { routeFlights, routeSegments, combinedOffers };
+}
 
 function buildWatchSpots(city) {
   return [
@@ -35,6 +164,7 @@ export async function buildTravelPlan(req, res) {
     originCity,
     destinationCity,
     departureDate,
+    endDate: rawEndDate = null,
     adults = 1,
     preferences = [],
     budget = null,
@@ -44,6 +174,7 @@ export async function buildTravelPlan(req, res) {
     cabinClass = "economy",
     maxStops = 1
   } = req.body || {};
+  const endDate = mode === "follow_team" ? (rawEndDate || departureDate || null) : rawEndDate;
 
   if (!originCity) {
     return res.status(400).json({
@@ -64,6 +195,10 @@ export async function buildTravelPlan(req, res) {
     return res.status(400).json({ ok: false, error: "favoriteTeam is required for follow_team mode" });
   }
 
+  if (mode === "follow_team" && departureDate && endDate && departureDate > endDate) {
+    return res.status(400).json({ ok: false, error: "endDate must be on or after departureDate" });
+  }
+
   const matches = await getUpcomingMatches();
   const matchPlan = buildMatchPlan({
     matches,
@@ -72,6 +207,7 @@ export async function buildTravelPlan(req, res) {
     destinationCity,
     favoriteTeam,
     departureDate,
+    endDate,
     originCoordinates
   });
 
@@ -81,7 +217,23 @@ export async function buildTravelPlan(req, res) {
   let offers = [];
   let flightError = null;
 
-  if (mode !== "stay_origin" && originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
+  let followTeamRoute = { routeFlights: [], routeSegments: [], combinedOffers: [] };
+  if (mode === "follow_team" && matchPlan.hasExactMatches) {
+    followTeamRoute = await buildFollowTeamRoute({
+      matches: matchPlan.matches,
+      originCity,
+      adults,
+      cabinClass,
+      maxStops,
+      originAirport,
+      destinationAirport,
+      preferences
+    });
+    offers = followTeamRoute.combinedOffers;
+    const firstFlight = followTeamRoute.routeFlights.find((leg) => leg.recommended)?.recommended || null;
+    originIata = firstFlight?.originIata || null;
+    destinationIata = firstFlight?.destinationIata || null;
+  } else if (mode !== "stay_origin" && originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
     try {
       const flightSearch = await getFlexibleFlightOffers({
         originCity,
@@ -142,6 +294,7 @@ export async function buildTravelPlan(req, res) {
       originIata,
       destinationIata,
       departureDate,
+      endDate,
       adults,
       preferences,
       budget,
@@ -161,6 +314,10 @@ export async function buildTravelPlan(req, res) {
     weather,
     weatherError,
     destinationGuide,
+    followTeamRoute: {
+      legs: followTeamRoute.routeFlights,
+      segments: followTeamRoute.routeSegments
+    },
     dataSources: {
       matches: "TheSportsDB league 4429 with fallback World Cup 2026 seed",
       maps: destinationGuide.dataSources

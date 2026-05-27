@@ -1,0 +1,23 @@
+export const cityCoordinates = {
+  madrid: { lat: 40.4168, lon: -3.7038 },
+  barcelona: { lat: 41.3874, lon: 2.1686 },
+  london: { lat: 51.5072, lon: -0.1276 },
+  paris: { lat: 48.8566, lon: 2.3522 },
+  "mexico city": { lat: 19.3029, lon: -99.1505 },
+  guadalajara: { lat: 20.6818, lon: -103.4624 },
+  monterrey: { lat: 25.668, lon: -100.2442 },
+  atlanta: { lat: 33.7554, lon: -84.4008 },
+  boston: { lat: 42.0909, lon: -71.2643 },
+  dallas: { lat: 32.7473, lon: -97.0945 },
+  houston: { lat: 29.6847, lon: -95.4107 },
+  "kansas city": { lat: 39.0489, lon: -94.4839 },
+  "los angeles": { lat: 33.9535, lon: -118.3392 },
+  miami: { lat: 25.958, lon: -80.2389 },
+  "new york/new jersey": { lat: 40.8135, lon: -74.0745 },
+  "new york": { lat: 40.8135, lon: -74.0745 },
+  philadelphia: { lat: 39.9008, lon: -75.1675 },
+  "san francisco bay area": { lat: 37.403, lon: -121.97 },
+  seattle: { lat: 47.5952, lon: -122.3316 },
+  toronto: { lat: 43.6332, lon: -79.4186 },
+  vancouver: { lat: 49.2768, lon: -123.1119 }
+};

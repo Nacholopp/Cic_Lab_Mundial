@@ -3,12 +3,13 @@ import { Link, Navigate } from "react-router-dom";
 import { CalendarDays, CloudSun, Landmark, Map, MapPin, Trophy, Tv, X } from "lucide-react";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import ProfileDropdown from "../components/ProfileDropdown.jsx";
-import WorldMap from "../components/WorldMap.jsx";
+import MapLibreFlightsMap from "../components/MapLibreFlightsMap.jsx";
 import FlightCard from "../components/FlightCard.jsx";
 import MatchList from "../components/MatchList.jsx";
 import OptionMenu from "../components/OptionMenu.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
+import GroupMatchups from "../components/GroupMatchups.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 import { fetchCurrentTime } from "../services/api.client.js";
 import { fanImage, fifa26Logo, heroImage, hostCities, stadiumImage } from "../data/worldCupVisuals.js";
@@ -109,7 +110,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div className="mx-auto -mt-10 max-w-7xl px-4">
+      <div className="mx-auto mt-3 max-w-7xl px-4">
         <section className="grid gap-4 md:grid-cols-4">
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Seleccion</p>
@@ -132,7 +133,11 @@ export default function Dashboard() {
         </section>
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.9fr_1fr]">
-          <WorldMap originCity={profile.originCity} destinationCity={effectiveDestinationCity} />
+          <MapLibreFlightsMap
+            originCity={profile.originCity}
+            destinationCity={effectiveDestinationCity}
+            segments={plan?.followTeamRoute?.segments || []}
+          />
           <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <img src={stadiumImage} alt="Estadio del Mundial" className="h-36 w-full object-cover" />
@@ -240,6 +245,33 @@ export default function Dashboard() {
           </section>
         )}
 
+        {profile.mode === "follow_team" && (plan?.followTeamRoute?.legs || []).length > 0 && (
+          <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <h2 className="text-lg font-black">Ruta para seguir a tu seleccion</h2>
+            <p className="mt-1 text-sm font-medium text-slate-600">
+              Tramos sugeridos para llegar a todos los partidos dentro de tus fechas.
+            </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {plan.followTeamRoute.legs.map((leg, index) => (
+                <article key={`${leg.fromCity}-${leg.toCity}-${index + 1}`} className="rounded-md border border-slate-200 p-3">
+                  <p className="text-xs font-bold uppercase text-slate-500">Tramo {index + 1}</p>
+                  <p className="mt-1 text-sm font-black text-slate-950">
+                    {leg.fromCity} a {leg.toCity}
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-600">Salida sugerida: {leg.departureDate}</p>
+                  {leg.recommended ? (
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                      {leg.recommended.price} {leg.recommended.currency}, {leg.recommended.duration}, {leg.recommended.stops} escalas
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold text-amber-700">No se encontro vuelo automatico para este tramo.</p>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
           <Timeline items={plan.itinerary} />
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -269,6 +301,8 @@ export default function Dashboard() {
         <section className="mt-8">
           <TeamShowcase />
         </section>
+
+        <GroupMatchups />
       </div>
 
       {showAlternatives && plan.matchPlan?.notice && (

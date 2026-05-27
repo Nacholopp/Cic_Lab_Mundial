@@ -87,9 +87,11 @@ function teamMatches(match, team) {
   return normalizeText(match.homeTeam).includes(target) || normalizeText(match.awayTeam).includes(target);
 }
 
-function dateMatches(match, departureDate) {
-  if (!departureDate) return true;
-  return match.date >= departureDate;
+function dateMatches(match, startDate, endDate) {
+  if (!startDate && !endDate) return true;
+  if (startDate && match.date < startDate) return false;
+  if (endDate && match.date > endDate) return false;
+  return true;
 }
 
 function withFallbackMatches(matches = []) {
@@ -134,9 +136,15 @@ export function buildMatchPlan({
   destinationCity,
   favoriteTeam,
   departureDate,
+  endDate,
   originCoordinates
 }) {
-  const sourceMatches = withFallbackMatches(matches).filter((match) => dateMatches(match, departureDate));
+  const sourceMatches = withFallbackMatches(matches)
+    .filter((match) => dateMatches(match, departureDate, endDate))
+    .sort((a, b) => `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`));
+  const allMatchesSorted = withFallbackMatches(matches).sort((a, b) =>
+    `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`)
+  );
   const selectedMode = mode || "travel_city";
   let selectedCity = canonicalCityName(destinationCity || originCity);
   let exactMatches = [];
@@ -170,11 +178,18 @@ export function buildMatchPlan({
     exactMatches = sourceMatches.filter((match) => teamMatches(match, favoriteTeam));
     selectedCity = exactMatches[0]?.city || canonicalCityName(destinationCity || originCity);
     if (!exactMatches.length) {
+      const teamMatchesOutsideRange = allMatchesSorted.filter((match) => teamMatches(match, favoriteTeam));
       notice = {
         type: "no_team_matches",
         title: "No hay partidos encontrados para esa seleccion",
-        message: "Te proponemos partidos de fechas cercanas y sedes activas para que puedas ajustar el plan."
+        message: teamMatchesOutsideRange.length
+          ? "No hay partidos de esa seleccion en el rango elegido. Te mostramos sus siguientes partidos disponibles."
+          : "No hay partidos de esa seleccion en la fuente actual. Te proponemos sedes activas para ajustar el plan."
       };
+      if (teamMatchesOutsideRange.length) {
+        exactMatches = teamMatchesOutsideRange.slice(0, 8);
+        selectedCity = exactMatches[0]?.city || canonicalCityName(destinationCity || originCity);
+      }
     }
   }
 

@@ -4,6 +4,14 @@ import { getCachedJson, setCachedJson } from "../config/cache.js";
 const AIRPORTS_CACHE_KEY = "airports:public-json";
 
 const fallbackAirports = [
+  { iata: "MAD", name: "Adolfo Suarez Madrid-Barajas Airport", city: "Madrid", country: "Spain" },
+  { iata: "BCN", name: "Barcelona-El Prat Airport", city: "Barcelona", country: "Spain" },
+  { iata: "LIS", name: "Humberto Delgado Airport", city: "Lisbon", country: "Portugal" },
+  { iata: "CDG", name: "Paris Charles de Gaulle Airport", city: "Paris", country: "France" },
+  { iata: "ORY", name: "Paris Orly Airport", city: "Paris", country: "France" },
+  { iata: "FCO", name: "Rome Fiumicino Airport", city: "Rome", country: "Italy" },
+  { iata: "MUC", name: "Munich Airport", city: "Munich", country: "Germany" },
+  { iata: "FRA", name: "Frankfurt Airport", city: "Frankfurt", country: "Germany" },
   { iata: "BRU", name: "Brussels Airport", city: "Brussels", country: "Belgium" },
   { iata: "CRL", name: "Brussels South Charleroi Airport", city: "Brussels", country: "Belgium" },
   { iata: "LAX", name: "Los Angeles International Airport", city: "Los Angeles", country: "United States" },

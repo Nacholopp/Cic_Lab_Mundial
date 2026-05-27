@@ -1,5 +1,5 @@
 import { Link, Navigate } from "react-router-dom";
-import WorldMap from "../components/WorldMap.jsx";
+import MapLibreFlightsMap from "../components/MapLibreFlightsMap.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
 
 export default function MapView() {
@@ -7,6 +7,7 @@ export default function MapView() {
   if (!profile || !plan) return <Navigate to="/" replace />;
   const destinationCity =
     plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
+  const routeSegments = plan?.followTeamRoute?.segments || [];
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-6">
@@ -17,7 +18,7 @@ export default function MapView() {
             Volver
           </Link>
         </div>
-        <WorldMap originCity={profile.originCity} destinationCity={destinationCity} />
+        <MapLibreFlightsMap originCity={profile.originCity} destinationCity={destinationCity} segments={routeSegments} />
       </div>
     </main>
   );

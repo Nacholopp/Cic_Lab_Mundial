@@ -63,6 +63,7 @@ export default function Onboarding() {
     cabinClass: profile?.cabinClass || "economy",
     maxStops: profile?.maxStops ?? 1,
     departureDate: profile?.departureDate || "",
+    endDate: profile?.endDate || "",
     adults: profile?.adults || 1,
     country: "ES"
   });
@@ -78,7 +79,11 @@ export default function Onboarding() {
       const baseReady = Boolean(form.originCity && form.adults);
       if (form.mode === "stay_origin") return baseReady;
       if (form.mode === "travel_city") return baseReady && Boolean(form.destinationCity && form.departureDate);
-      if (form.mode === "follow_team") return baseReady && Boolean(form.favoriteTeam && form.departureDate);
+      if (form.mode === "follow_team") {
+        if (!form.favoriteTeam || !form.departureDate) return false;
+        if (form.endDate && form.endDate < form.departureDate) return false;
+        return true;
+      }
       return false;
     },
     [form]
@@ -102,6 +107,7 @@ export default function Onboarding() {
         originCity: form.originCity,
         destinationCity: form.mode === "travel_city" ? form.destinationCity : null,
         departureDate: form.mode === "stay_origin" ? null : form.departureDate,
+        endDate: form.mode === "follow_team" ? (form.endDate || form.departureDate) : null,
         adults,
         originCoordinates: null,
         budgetPerPerson,
@@ -141,7 +147,7 @@ export default function Onboarding() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden px-4 py-8 text-white">
+      <section className="relative overflow-visible px-4 py-8 text-white">
         <img src={heroImage} alt="Estadio mundialista" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-slate-950/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/70 to-slate-950/20" />
@@ -286,7 +292,7 @@ export default function Onboarding() {
           )}
           {form.mode !== "stay_origin" && (
             <label className="text-sm font-bold">
-              Fecha de salida
+              Fecha inicio del plan
               <input
                 type="date"
                 className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
@@ -296,6 +302,25 @@ export default function Onboarding() {
                 required
               />
             </label>
+          )}
+          {form.mode === "follow_team" && (
+            <label className="text-sm font-bold">
+              Fecha fin para seguir a tu seleccion
+              <input
+                type="date"
+                className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
+                name="endDate"
+                value={form.endDate}
+                min={form.departureDate || undefined}
+                onChange={updateField}
+                required
+              />
+            </label>
+          )}
+          {form.mode === "follow_team" && form.endDate && form.departureDate && form.endDate < form.departureDate && (
+            <p className="text-sm font-semibold text-amber-200 md:col-span-2">
+              La fecha fin debe ser igual o posterior a la fecha inicio.
+            </p>
           )}
           <label className="text-sm font-bold">
             Presupuesto por persona
