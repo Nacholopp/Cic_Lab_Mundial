@@ -6,7 +6,6 @@ import { getWeatherByCity } from "../services/weather.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
 import { addDays } from "../utils/date.utils.js";
-import { prisma } from "../config/prisma.js";
 
 function normalizeText(value = "") {
   return value
@@ -177,36 +176,14 @@ function buildWatchSpots(city) {
   ];
 }
 
-async function saveItineraryForUser({
-  userId,
-  mode,
-  originCity,
-  destinationCity,
-  departureDate,
-  totalCost
-}) {
-  if (!userId || mode === "stay_origin" || !departureDate || !destinationCity) return null;
-
-  const created = await prisma.itinerary.create({
-    data: {
-      userId,
-      originCity,
-      destination: destinationCity,
-      departureDate: new Date(`${departureDate}T00:00:00Z`),
-      totalCost: totalCost || null
-    },
-    select: { id: true }
-  });
-  return created.id;
-}
-
 export async function buildTravelPlan(req, res) {
+  const body = req.body || {};
   const {
     mode = "travel_city",
-    favoriteTeam,
-    originCity,
-    destinationCity,
-    departureDate,
+    favoriteTeam: rawFavoriteTeam,
+    originCity: rawOriginCity,
+    destinationCity: rawDestinationCity,
+    departureDate: rawDepartureDate,
     endDate: rawEndDate = null,
     adults = 1,
     preferences = [],
@@ -216,21 +193,36 @@ export async function buildTravelPlan(req, res) {
     destinationAirport = null,
     cabinClass = "economy",
     maxStops = 1
-  } = req.body || {};
+  } = body;
+  const destinationCity =
+    rawDestinationCity?.toString().trim() ||
+    body.requestedDestinationCity?.toString().trim() ||
+    body.destination_city?.toString().trim() ||
+    body.destination?.toString().trim() ||
+    body.profile?.destinationCity?.toString().trim() ||
+    destinationAirport?.city?.toString().trim() ||
+    "";
+  const originCity =
+    rawOriginCity?.toString().trim() ||
+    body.origin_city?.toString().trim() ||
+    body.origin?.toString().trim() ||
+    body.profile?.originCity?.toString().trim() ||
+    originAirport?.city?.toString().trim() ||
+    "";
+  const favoriteTeam = rawFavoriteTeam?.toString().trim() || "";
+  const departureDate = rawDepartureDate?.toString().trim() || "";
   const endDate = mode === "follow_team" ? (rawEndDate || departureDate || null) : rawEndDate;
+  const effectiveInputDestination = destinationCity || body.requestedDestinationCity?.toString().trim() || "";
 
   if (!originCity) {
-    return res.status(400).json({
-      ok: false,
-      error: "originCity is required"
-    });
+    return res.status(400).json({ ok: false, error: "originCity is required" });
   }
 
   if (mode !== "stay_origin" && !departureDate) {
     return res.status(400).json({ ok: false, error: "departureDate is required for travel modes" });
   }
 
-  if (mode === "travel_city" && !destinationCity) {
+  if (mode === "travel_city" && !effectiveInputDestination) {
     return res.status(400).json({ ok: false, error: "destinationCity is required for travel_city mode" });
   }
 
@@ -247,14 +239,14 @@ export async function buildTravelPlan(req, res) {
     matches,
     mode,
     originCity,
-    destinationCity,
+    destinationCity: effectiveInputDestination,
     favoriteTeam,
     departureDate,
     endDate,
     originCoordinates
   });
 
-  const effectiveDestinationCity = matchPlan.selectedCity || destinationCity || originCity;
+  const effectiveDestinationCity = matchPlan.selectedCity || effectiveInputDestination || originCity;
   let originIata = null;
   let destinationIata = null;
   let offers = [];
@@ -332,15 +324,6 @@ export async function buildTravelPlan(req, res) {
         ? "within_budget"
         : "over_budget";
 
-  const savedItineraryId = await saveItineraryForUser({
-    userId: req.authUser?.id || null,
-    mode,
-    originCity,
-    destinationCity: effectiveDestinationCity,
-    departureDate,
-    totalCost: estimatedTotalCost
-  });
-
   res.json({
     ok: true,
     profile: {
@@ -385,24 +368,13 @@ export async function buildTravelPlan(req, res) {
       currency: rankedFlights.recommended?.currency || "USD",
       budgetStatus
     },
-    savedItineraryId
+    savedItineraryId: null
   });
 }
 
 export async function listMyItineraries(req, res) {
-  const userId = req.authUser?.id;
-  if (!userId) {
-    return res.status(401).json({ ok: false, error: "Authentication required" });
-  }
-
-  const itineraries = await prisma.itinerary.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 30
-  });
-
   return res.json({
     ok: true,
-    itineraries
+    itineraries: []
   });
 }

@@ -25,11 +25,16 @@ export default function Dashboard() {
   const { plan, profile, country, authUser, authToken, setAuthSession, clearAuthSession } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
-  const isLocalPlan = profile.mode === "stay_origin";
-  const isFollowTeamPlan = profile.mode === "follow_team";
-  const isTravelCityPlan = profile.mode === "travel_city";
+  const activeProfile = plan?.profile || profile;
+  const isLocalPlan = activeProfile?.mode === "stay_origin";
+  const isFollowTeamPlan = activeProfile?.mode === "follow_team";
+  const isTravelCityPlan = activeProfile?.mode === "travel_city";
   const effectiveDestinationCity =
-    plan?.profile?.destinationCity || plan?.matchPlan?.selectedCity || profile?.destinationCity || profile?.originCity;
+    plan?.profile?.destinationCity ||
+    plan?.profile?.requestedDestinationCity ||
+    plan?.matchPlan?.selectedCity ||
+    activeProfile?.destinationCity ||
+    activeProfile?.originCity;
   const followTeamLegs = plan?.followTeamRoute?.legs || [];
 
   useEffect(() => {
@@ -87,10 +92,10 @@ export default function Dashboard() {
             </h1>
             <p className="mt-4 max-w-2xl text-base font-medium text-white/85 sm:text-lg">
               {isLocalPlan
-                ? `Partidos, horarios y sitios para ver el Mundial en ${profile.originCity}.`
+                ? `Partidos, horarios y sitios para ver el Mundial en ${activeProfile.originCity}.`
                 : isTravelCityPlan
                   ? `Plan de viaje a ${effectiveDestinationCity}: vuelos, horarios de partidos, clima y zonas clave alrededor de la sede.`
-                  : `${profile.favoriteTeam || "Mundial 2026"} desde ${profile.originCity} hacia ${effectiveDestinationCity}, con vuelos, ruta y seguimiento completo de partidos.`}
+                  : `${activeProfile.favoriteTeam || "Mundial 2026"} desde ${activeProfile.originCity} hacia ${effectiveDestinationCity}, con vuelos, ruta y seguimiento completo de partidos.`}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
@@ -116,7 +121,7 @@ export default function Dashboard() {
               </Link>
             </div>
             <div className="mt-4">
-              <OptionMenu currentMode={profile.mode} />
+              <OptionMenu currentMode={activeProfile.mode} />
             </div>
           </div>
         </div>
@@ -127,12 +132,12 @@ export default function Dashboard() {
           {!isTravelCityPlan && (
             <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
               <p className="text-xs font-bold uppercase text-slate-500">Seleccion</p>
-              <p className="mt-1 text-2xl font-black">{profile.favoriteTeam || "Mundial 2026"}</p>
+              <p className="mt-1 text-2xl font-black">{activeProfile.favoriteTeam || "Mundial 2026"}</p>
             </div>
           )}
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">{isLocalPlan ? "Ciudad" : "Destino"}</p>
-            <p className="mt-1 text-2xl font-black">{isLocalPlan ? profile.originCity : effectiveDestinationCity}</p>
+            <p className="mt-1 text-2xl font-black">{isLocalPlan ? activeProfile.originCity : effectiveDestinationCity}</p>
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Presupuesto</p>
@@ -148,7 +153,7 @@ export default function Dashboard() {
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.9fr_1fr]">
           <MapLibreFlightsMap
-            originCity={profile.originCity}
+            originCity={activeProfile.originCity}
             destinationCity={effectiveDestinationCity}
             segments={plan?.followTeamRoute?.segments || []}
           />
@@ -224,7 +229,7 @@ export default function Dashboard() {
         <section className="mt-4">
           <MatchList
             matches={plan.matches}
-            title={plan.matchPlan?.hasExactMatches ? matchTitles[profile.mode] || "Partidos seleccionados" : "Opciones similares"}
+            title={plan.matchPlan?.hasExactMatches ? matchTitles[activeProfile.mode] || "Partidos seleccionados" : "Opciones similares"}
             emptyText="No hay partidos que encajen con esta busqueda."
           />
           {isTravelCityPlan && <MatchVenueCards matches={plan.matches} />}
@@ -263,7 +268,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {profile.mode === "follow_team" && (plan?.followTeamRoute?.legs || []).length > 0 && (
+        {activeProfile.mode === "follow_team" && (plan?.followTeamRoute?.legs || []).length > 0 && (
           <section className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="text-lg font-black">Ruta para seguir a tu seleccion</h2>
             <p className="mt-1 text-sm font-medium text-slate-600">
