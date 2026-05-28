@@ -152,35 +152,49 @@ export async function getFlexibleFlightOffers({
     resolveAirportSelection(destinationCity, destinationAirport)
   ]);
 
-  const offsets = [-1, 0, 1];
-  const requests = [];
+  const offsets = [0, -1, 1];
+  const selectedOrigins = originAirports.slice(0, 1);
+  const selectedDestinations = destinationAirports.slice(0, 1);
+  const collectedOffers = [];
   const errors = [];
+  let sawRateLimit = false;
 
-  for (const origin of originAirports) {
-    for (const destination of destinationAirports) {
+  for (const origin of selectedOrigins) {
+    for (const destination of selectedDestinations) {
       for (const offset of offsets) {
-        requests.push(
-          searchIgnavOneWayFare({
+        try {
+          const offers = await searchIgnavOneWayFare({
             originIata: origin.iata,
             destinationIata: destination.iata,
             departureDate: addDays(departureDate, offset),
             cabinClass,
             maxStops,
             dayOffset: offset
-          }).catch((error) => {
-            errors.push(error.message);
-            return [];
-          })
-        );
+          });
+          collectedOffers.push(...offers);
+          if (collectedOffers.length >= 15) break;
+        } catch (error) {
+          if (error?.message?.includes("(429)")) sawRateLimit = true;
+          errors.push(error.message);
+          if (error?.message?.includes("(402)")) {
+            // Avoid exhausting credits or failing repeatedly with payment-required responses.
+            break;
+          }
+        }
       }
+      if (collectedOffers.length >= 15) break;
     }
+    if (collectedOffers.length >= 15) break;
   }
 
-  const offers = (await Promise.all(requests)).flat();
-  const sortedOffers = offers.sort((a, b) => a.price - b.price);
+  const sortedOffers = collectedOffers.sort((a, b) => a.price - b.price);
   const best = sortedOffers[0] || null;
   if (!sortedOffers.length && errors.length) {
-    const error = new Error(errors[0]);
+    const error = new Error(
+      sawRateLimit
+        ? "Ignav rate limit alcanzado temporalmente. Reintenta en unos segundos."
+        : errors[0]
+    );
     error.statusCode = 502;
     throw error;
   }

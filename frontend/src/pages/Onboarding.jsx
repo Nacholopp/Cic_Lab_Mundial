@@ -5,6 +5,7 @@ import AirportPicker from "../components/AirportPicker.jsx";
 import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import NewsMagazine from "../components/NewsMagazine.jsx";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
+import ProfileDropdown from "../components/ProfileDropdown.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
 import LoadingOverlay from "../components/LoadingOverlay.jsx";
 import { buildPlan } from "../services/api.client.js";
@@ -46,20 +47,55 @@ const flowOptions = [
     description: "Busca todos los partidos disponibles de esa seleccion."
   }
 ];
+const originCitySuggestions = [
+  "Madrid",
+  "Barcelona",
+  "Valencia",
+  "Sevilla",
+  "Bilbao",
+  "Malaga",
+  "Paris",
+  "London",
+  "Rome",
+  "Berlin",
+  "Mexico City",
+  "Guadalajara",
+  "Monterrey",
+  "Dallas",
+  "Atlanta",
+  "Los Angeles",
+  "Miami",
+  "Toronto",
+  "Vancouver",
+  "New York"
+];
 
 const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { profile, setProfile, setPlan, setError, setLoading, loading, error, setCountry } = usePlannerStore();
+  const {
+    profile,
+    authUser,
+    authToken,
+    setProfile,
+    setPlan,
+    setError,
+    setLoading,
+    loading,
+    error,
+    setCountry,
+    setAuthSession,
+    clearAuthSession
+  } = usePlannerStore();
   const initialMode = searchParams.get("mode") || profile?.mode || "travel_city";
 
   const [form, setForm] = useState({
     mode: initialMode,
     favoriteTeam: profile?.favoriteTeam || "",
     originCity: profile?.originCity || "",
-    destinationCity: profile?.requestedDestinationCity || profile?.destinationCity || "Dallas",
+    destinationCity: profile?.requestedDestinationCity || profile?.destinationCity || "",
     budget: profile?.budget ? String(profile.budget / (profile.adults || 1)) : "",
     originAirport: profile?.originAirport || null,
     destinationAirport: profile?.destinationAirport || null,
@@ -79,11 +115,15 @@ export default function Onboarding() {
 
   const canSubmit = useMemo(
     () => {
-      const baseReady = Boolean(form.originCity && form.adults);
-      if (form.mode === "stay_origin") return baseReady;
-      if (form.mode === "travel_city") return baseReady && Boolean(form.destinationCity && form.departureDate);
+      const normalizedOriginCity = form.originCity?.trim() || form.originAirport?.city?.trim() || "";
+      const normalizedDestinationCity = form.destinationCity?.trim() || form.destinationAirport?.city?.trim() || "";
+      const hasDepartureDate = Boolean(form.departureDate?.trim());
+      const baseReady = Boolean(form.adults);
+      if (form.mode === "stay_origin") return baseReady && Boolean(normalizedOriginCity);
+      if (form.mode === "travel_city") return baseReady && Boolean(normalizedOriginCity && normalizedDestinationCity && hasDepartureDate);
       if (form.mode === "follow_team") {
-        if (!form.favoriteTeam || !form.departureDate) return false;
+        if (!form.favoriteTeam) return false;
+        if (!normalizedOriginCity || !hasDepartureDate) return false;
         if (form.endDate && form.endDate < form.departureDate) return false;
         return true;
       }
@@ -99,18 +139,48 @@ export default function Onboarding() {
 
   const submit = async (event) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const adults = Number(form.adults);
     const budgetPerPerson = form.budget ? Number(form.budget) : null;
+    const originCityFromDom = formData.get("originCity")?.toString().trim() || "";
+    const destinationCityFromDom = formData.get("destinationCity")?.toString().trim() || "";
+    const departureDateFromDom = formData.get("departureDate")?.toString().trim() || "";
+    const normalizedOriginCity =
+      form.originCity?.trim() ||
+      originCityFromDom ||
+      form.originAirport?.city?.trim() ||
+      "";
+    const normalizedDestinationCity =
+      form.destinationCity?.trim() ||
+      destinationCityFromDom ||
+      form.destinationAirport?.city?.trim() ||
+      "";
+    const normalizedDepartureDate = form.departureDate?.trim() || departureDateFromDom || "";
+    const normalizedFavoriteTeam = form.favoriteTeam?.trim() || "";
+
+    if (!normalizedOriginCity) {
+      setError("Debes indicar ciudad de origen.");
+      return;
+    }
+    if (form.mode === "travel_city" && !normalizedDestinationCity) {
+      setError("Debes indicar ciudad de destino.");
+      return;
+    }
+    if (form.mode !== "stay_origin" && !normalizedDepartureDate) {
+      setError("Debes indicar fecha de salida.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       const payload = {
         mode: form.mode,
-        favoriteTeam: form.favoriteTeam,
-        originCity: form.originCity,
-        destinationCity: form.mode === "travel_city" ? form.destinationCity : null,
-        departureDate: form.mode === "stay_origin" ? null : form.departureDate,
-        endDate: form.mode === "follow_team" ? (form.endDate || form.departureDate) : null,
+        favoriteTeam: normalizedFavoriteTeam,
+        originCity: normalizedOriginCity,
+        destinationCity: form.mode === "travel_city" ? normalizedDestinationCity : null,
+        departureDate: form.mode === "stay_origin" ? null : normalizedDepartureDate,
+        endDate: form.mode === "follow_team" ? (form.endDate || normalizedDepartureDate) : null,
         adults,
         originCoordinates: null,
         budgetPerPerson,
@@ -122,15 +192,36 @@ export default function Onboarding() {
         preferences: []
       };
       const [result] = await Promise.all([
-        buildPlan(payload)
+        buildPlan(payload, authToken)
           .then((response) => ({ response }))
           .catch((requestError) => ({ requestError })),
         wait(2000)
       ]);
       if (result.requestError) throw result.requestError;
       const response = result.response;
+      if (normalizedOriginCity !== form.originCity) {
+        setForm((prev) => ({ ...prev, originCity: normalizedOriginCity }));
+      }
+      const responseProfile = response?.profile || {};
+      const normalizedResponseProfile = {
+        ...responseProfile,
+        mode: responseProfile.mode || payload.mode,
+        originCity:
+          responseProfile.originCity && responseProfile.originCity !== "Origen no definido"
+            ? responseProfile.originCity
+            : normalizedOriginCity,
+        requestedDestinationCity:
+          responseProfile.requestedDestinationCity || (form.mode === "travel_city" ? normalizedDestinationCity : null),
+        destinationCity:
+          form.mode === "travel_city"
+            ? responseProfile.destinationCity && responseProfile.destinationCity !== "Origen no definido"
+              ? responseProfile.destinationCity
+              : normalizedDestinationCity || normalizedOriginCity
+            : responseProfile.destinationCity || normalizedOriginCity,
+        departureDate: form.mode === "stay_origin" ? null : responseProfile.departureDate || normalizedDepartureDate
+      };
       setCountry(form.country);
-      setProfile(response.profile || payload);
+      setProfile(normalizedResponseProfile);
       setPlan(response);
       navigate("/dashboard");
     } catch (submitError) {
@@ -146,6 +237,15 @@ export default function Onboarding() {
       <header className="sticky top-0 z-50 border-b border-cyan-100/20 bg-gradient-to-r from-[#06111f]/95 via-[#08304b]/92 to-[#0f3d2e]/92 px-4 py-3 text-white shadow-[0_18px_45px_rgba(2,6,23,0.42)] backdrop-blur-2xl">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
           <NewspaperDropdown country={form.country} variant="glass" />
+          <div className="ml-auto">
+            <ProfileDropdown
+              profile={profile}
+              authUser={authUser}
+              authToken={authToken}
+              onLoginSuccess={setAuthSession}
+              onLogout={clearAuthSession}
+            />
+          </div>
           <a
             href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
             target="_blank"
@@ -257,6 +357,7 @@ export default function Onboarding() {
             <input
               className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
               name="originCity"
+              list="origin-city-suggestions"
               value={form.originCity}
               onChange={(event) =>
                 setForm((prev) => ({
@@ -267,6 +368,11 @@ export default function Onboarding() {
               }
               required
             />
+            <datalist id="origin-city-suggestions">
+              {originCitySuggestions.map((city) => (
+                <option key={city} value={city} />
+              ))}
+            </datalist>
           </label>
           {form.mode !== "stay_origin" && (
             <AirportPicker
@@ -288,6 +394,25 @@ export default function Onboarding() {
               }
             />
           )}
+          {form.mode === "travel_city" && (
+            <label className="text-sm font-bold">
+              Ciudad destino
+              <input
+                className="mt-1 w-full rounded-md border border-white/20 bg-white/85 px-3 py-2 font-medium text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-cyan-200 focus:ring-2 focus:ring-cyan-200/30"
+                name="destinationCity"
+                value={form.destinationCity}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    destinationCity: event.target.value,
+                    destinationAirport: null
+                  }))
+                }
+                required
+              />
+            </label>
+          )}
+          {form.mode === "travel_city" && <input type="hidden" name="destinationCity" value={form.destinationCity || ""} />}
           {form.mode === "travel_city" && (
             <AirportPicker
               city={form.destinationCity}

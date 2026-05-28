@@ -227,11 +227,21 @@ export function buildMatchPlan({
     selectedCity = canonicalCityName(destinationCity);
     exactMatches = sourceMatches.filter((match) => cityMatches(match, selectedCity));
     if (!exactMatches.length) {
-      notice = {
-        type: "no_destination_matches",
-        title: "No hay partidos para ese destino y fecha",
-        message: "Estas son opciones similares en otras sedes cercanas o activas del calendario."
-      };
+      const sameCityOutsideDate = allMatchesSorted.filter((match) => cityMatches(match, selectedCity));
+      if (sameCityOutsideDate.length) {
+        exactMatches = sameCityOutsideDate.slice(0, 8);
+        notice = {
+          type: "no_destination_matches_in_date",
+          title: "No hay partidos en esa fecha para el destino elegido",
+          message: `Te mostramos partidos disponibles en ${selectedCity} en otras fechas del torneo.`
+        };
+      } else {
+        notice = {
+          type: "no_destination_matches",
+          title: "No hay partidos para ese destino y fecha",
+          message: "Estas son opciones similares en otras sedes cercanas o activas del calendario."
+        };
+      }
     }
   }
 
