@@ -47,12 +47,6 @@ function dateMinusDays(isoDate, days) {
   return date.toISOString().slice(0, 10);
 }
 
-function datePlusDays(isoDate, days) {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
 async function buildFollowTeamRoute({
   matches,
   originCity,
@@ -186,13 +180,12 @@ function buildWatchSpots(city) {
 }
 
 export async function buildTravelPlan(req, res) {
-  const body = req.body || {};
   const {
     mode = "travel_city",
-    favoriteTeam: rawFavoriteTeam,
-    originCity: rawOriginCity,
-    destinationCity: rawDestinationCity,
-    departureDate: rawDepartureDate,
+    favoriteTeam,
+    originCity,
+    destinationCity,
+    departureDate,
     endDate: rawEndDate = null,
     adults = 1,
     preferences = [],
@@ -202,37 +195,21 @@ export async function buildTravelPlan(req, res) {
     destinationAirport = null,
     cabinClass = "economy",
     maxStops = 1
-  } = body;
-  const destinationCity =
-    rawDestinationCity?.toString().trim() ||
-    body.requestedDestinationCity?.toString().trim() ||
-    body.destination_city?.toString().trim() ||
-    body.destination?.toString().trim() ||
-    body.profile?.destinationCity?.toString().trim() ||
-    destinationAirport?.city?.toString().trim() ||
-    "";
-  const originCity =
-    rawOriginCity?.toString().trim() ||
-    body.origin_city?.toString().trim() ||
-    body.origin?.toString().trim() ||
-    body.profile?.originCity?.toString().trim() ||
-    originAirport?.city?.toString().trim() ||
-    "";
-  const favoriteTeam = rawFavoriteTeam?.toString().trim() || "";
-  const departureDate = rawDepartureDate?.toString().trim() || "";
-  const resolvedOriginCity = originCity;
+  } = req.body || {};
   const endDate = mode === "follow_team" ? (rawEndDate || departureDate || null) : rawEndDate;
-  const effectiveInputDestination = destinationCity || body.requestedDestinationCity?.toString().trim() || "";
 
   if (!originCity) {
-    return res.status(400).json({ ok: false, error: "originCity is required" });
+    return res.status(400).json({
+      ok: false,
+      error: "originCity is required"
+    });
   }
 
   if (mode !== "stay_origin" && !departureDate) {
     return res.status(400).json({ ok: false, error: "departureDate is required for travel modes" });
   }
 
-  if (mode === "travel_city" && !effectiveInputDestination) {
+  if (mode === "travel_city" && !destinationCity) {
     return res.status(400).json({ ok: false, error: "destinationCity is required for travel_city mode" });
   }
 
@@ -249,14 +226,14 @@ export async function buildTravelPlan(req, res) {
     matches,
     mode,
     originCity,
-    destinationCity: effectiveInputDestination,
+    destinationCity,
     favoriteTeam,
     departureDate,
     endDate,
     originCoordinates
   });
 
-  const effectiveDestinationCity = matchPlan.selectedCity || effectiveInputDestination || originCity;
+  const effectiveDestinationCity = matchPlan.selectedCity || destinationCity || originCity;
   let originIata = null;
   let destinationIata = null;
   let offers = [];
@@ -267,7 +244,7 @@ export async function buildTravelPlan(req, res) {
   if (mode === "follow_team" && matchPlan.hasExactMatches) {
     followTeamRoute = await buildFollowTeamRoute({
       matches: matchPlan.matches,
-      originCity: resolvedOriginCity,
+      originCity,
       adults,
       cabinClass,
       maxStops,
@@ -294,7 +271,7 @@ export async function buildTravelPlan(req, res) {
     ];
     try {
       const flightSearch = await getFlexibleFlightOffers({
-        originCity: resolvedOriginCity,
+        originCity,
         destinationCity: effectiveDestinationCity,
         departureDate,
         adults,
@@ -326,13 +303,7 @@ export async function buildTravelPlan(req, res) {
   let weatherError = null;
   let cityImageUrl = null;
   try {
-    const itineraryDates = itinerary.map((item) => item.date).filter(Boolean).sort();
-    const weatherStart = itineraryDates[0] || departureDate || new Date().toISOString().slice(0, 10);
-    const weatherEnd = itineraryDates[itineraryDates.length - 1] || endDate || datePlusDays(weatherStart, 4);
-    weather = await getWeatherByCity(effectiveDestinationCity, {
-      startDate: weatherStart,
-      endDate: weatherEnd
-    });
+    weather = await getWeatherByCity(effectiveDestinationCity);
   } catch (error) {
     weatherError = error.message;
   }
@@ -345,10 +316,10 @@ export async function buildTravelPlan(req, res) {
 
   const recommendedPrice = rankedFlights.recommended?.price || 0;
   const estimatedTotalCost = recommendedPrice * adults;
-  const watchSpots = mode === "stay_origin" ? buildWatchSpots(resolvedOriginCity) : [];
+  const watchSpots = mode === "stay_origin" ? buildWatchSpots(originCity) : [];
   const destinationGuide = await getDestinationGuide({
     city: effectiveDestinationCity,
-    originCity: resolvedOriginCity
+    originCity
   });
 
   let destinationGuides = null;
@@ -376,7 +347,7 @@ export async function buildTravelPlan(req, res) {
     profile: {
       mode,
       favoriteTeam,
-      originCity: resolvedOriginCity,
+      originCity,
       destinationCity: effectiveDestinationCity,
       requestedDestinationCity: destinationCity,
       originIata,
@@ -417,14 +388,6 @@ export async function buildTravelPlan(req, res) {
       estimatedTotalCost,
       currency: rankedFlights.recommended?.currency || "USD",
       budgetStatus
-    },
-    savedItineraryId: null
-  });
-}
-
-export async function listMyItineraries(req, res) {
-  return res.json({
-    ok: true,
-    itineraries: []
+    }
   });
 }

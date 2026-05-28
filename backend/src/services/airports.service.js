@@ -2,17 +2,6 @@ import { env } from "../config/env.js";
 import { getCachedJson, setCachedJson } from "../config/cache.js";
 
 const AIRPORTS_CACHE_KEY = "airports:public-json";
-const cityAliases = new Map([
-  ["ciudad de mexico", "mexico city"],
-  ["nueva york", "new york"],
-  ["san francisco", "san francisco bay area"],
-  ["area de la bahia", "san francisco bay area"],
-  ["los angeles", "los angeles"],
-  ["londres", "london"],
-  ["paris", "paris"],
-  ["roma", "rome"],
-  ["bruselas", "brussels"]
-]);
 
 const fallbackAirports = [
   { iata: "MAD", name: "Adolfo Suarez Madrid-Barajas Airport", city: "Madrid", country: "Spain" },
@@ -62,11 +51,6 @@ function normalizeText(value = "") {
     .trim();
 }
 
-function canonicalQueryCity(value = "") {
-  const normalized = normalizeText(value);
-  return cityAliases.get(normalized) || normalized;
-}
-
 function normalizeAirport(raw) {
   const iata = raw.iata || raw.iata_code || raw.IATA || "";
   if (!iata || iata === "\\N") return null;
@@ -113,7 +97,7 @@ export async function searchAirportsByCity(city, limit = 12) {
   const query = city?.trim();
   if (!query) return [];
 
-  const target = canonicalQueryCity(query);
+  const target = normalizeText(query);
   const airports = await loadAirports();
   const merged = [...airports, ...fallbackAirports]
     .filter((airport) => {

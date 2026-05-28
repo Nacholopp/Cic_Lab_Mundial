@@ -13,30 +13,7 @@ import itineraryRoutes from "./routes/itinerary.routes.js";
 
 const app = express();
 
-const localhostOriginRegex = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/;
-
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-
-      if (Array.isArray(env.corsOrigin) && env.corsOrigin.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      if (env.nodeEnv !== "production" && localhostOriginRegex.test(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error("Not allowed by CORS"));
-    }
-  })
-);
+app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json());
 app.use(globalRateLimit);
 

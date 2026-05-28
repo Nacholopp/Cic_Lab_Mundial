@@ -31,7 +31,7 @@ const formatCurrency = (amount, currency = "USD") =>
   }).format(amount);
 
 export default function Dashboard() {
-  const { plan, profile, country, authUser, authToken, setAuthSession, clearAuthSession } = usePlannerStore();
+  const { plan, profile, country } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
   const [showAlternatives, setShowAlternatives] = useState(Boolean(plan?.matchPlan?.notice));
   const isLocalPlan = profile.mode === "stay_origin";
@@ -79,13 +79,7 @@ export default function Dashboard() {
           <header className="relative z-20 flex items-center justify-between gap-3 rounded-lg border border-cyan-100/20 bg-gradient-to-r from-[#06111f]/92 via-[#08304b]/88 to-[#0f3d2e]/88 p-3 shadow-[0_18px_45px_rgba(2,6,23,0.38)] backdrop-blur-2xl">
             <NewspaperDropdown country={country} variant="glass" />
             <div className="flex shrink-0 items-center gap-3">
-              <ProfileDropdown
-                profile={profile}
-                authUser={authUser}
-                authToken={authToken}
-                onLoginSuccess={setAuthSession}
-                onLogout={clearAuthSession}
-              />
+              <ProfileDropdown profile={profile} />
               <a
                 href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
                 target="_blank"

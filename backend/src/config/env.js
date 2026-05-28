@@ -32,16 +32,13 @@ export const env = {
   openWeatherApiKey: process.env.OPENWEATHER_API_KEY || "",
   openWeatherBaseUrl:
     process.env.OPENWEATHER_BASE_URL || "https://api.openweathermap.org/data/2.5/weather",
-  openMeteoBaseUrl: process.env.OPEN_METEO_BASE_URL || "https://api.open-meteo.com/v1",
-  openMeteoGeocodeBaseUrl:
-    process.env.OPEN_METEO_GEOCODE_BASE_URL || "https://geocoding-api.open-meteo.com/v1",
-  openMeteoGeocodingUrl:
-    process.env.OPEN_METEO_GEOCODING_URL || "https://geocoding-api.open-meteo.com/v1/search",
   googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || "",
   googlePlacesBaseUrl:
     process.env.GOOGLE_PLACES_BASE_URL || "https://places.googleapis.com/v1",
   geoapifyApiKey: process.env.GEOAPIFY_API_KEY || "",
   geoapifyBaseUrl: process.env.GEOAPIFY_BASE_URL || "https://api.geoapify.com/v2",
   openTripMapApiKey: process.env.OPENTRIPMAP_API_KEY || "",
-  openTripMapBaseUrl: process.env.OPENTRIPMAP_BASE_URL || "https://api.opentripmap.com/0.1/en/places"
+  openTripMapBaseUrl: process.env.OPENTRIPMAP_BASE_URL || "https://api.opentripmap.com/0.1/en/places",
+  openMeteoBaseUrl: process.env.OPEN_METEO_BASE_URL || "https://api.open-meteo.com/v1/forecast",
+  openMeteoGeocodingUrl: process.env.OPEN_METEO_GEOCODING_URL || "https://geocoding-api.open-meteo.com/v1/search"
 };

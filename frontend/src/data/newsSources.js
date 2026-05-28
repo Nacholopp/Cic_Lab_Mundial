@@ -275,8 +275,7 @@ export const newsSources = {
     stories: [
       {
         title: "Alisson vuelve a jugar y Brasil monitorea a Neymar",
-        url: "https://ge.globo.com/futebol/selecao-brasileira/noticia/2026/05/24/alisson-volta-a-jogar-apos-dois-meses-e-selecao-monitora-neymar-as-vesperas-de-apresentacao.ghtml",
-        image: "https://s03.video.glbimg.com/x240/14624354.jpg"
+        url: "https://ge.globo.com/futebol/selecao-brasileira/noticia/2026/05/24/alisson-volta-a-jogar-apos-dois-meses-e-selecao-monitora-neymar-as-vesperas-de-apresentacao.ghtml"
       },
       {
         title: "Endrick celebra su convocatoria para el Mundial",

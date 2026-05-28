@@ -13,10 +13,9 @@ export async function findAirports(req, res) {
 }
 
 export async function findFlights(req, res) {
-  const body = req.body || {};
   const {
-    originCity: rawOriginCity,
-    destinationCity: rawDestinationCity,
+    originCity,
+    destinationCity,
     departureDate,
     adults = 1,
     preferences = [],
@@ -24,21 +23,7 @@ export async function findFlights(req, res) {
     destinationAirport = null,
     cabinClass = "economy",
     maxStops = 1
-  } = body;
-  const originCity =
-    rawOriginCity?.toString().trim() ||
-    body.origin_city?.toString().trim() ||
-    body.origin?.toString().trim() ||
-    body.profile?.originCity?.toString().trim() ||
-    originAirport?.city?.toString().trim() ||
-    "";
-  const destinationCity =
-    rawDestinationCity?.toString().trim() ||
-    body.destination_city?.toString().trim() ||
-    body.destination?.toString().trim() ||
-    body.profile?.destinationCity?.toString().trim() ||
-    destinationAirport?.city?.toString().trim() ||
-    "";
+  } = req.body || {};
 
   if (!originCity || !destinationCity || !departureDate) {
     return res.status(400).json({
