@@ -7,6 +7,7 @@ import { getCityImageUrl } from "../services/city-image.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
 import { addDays } from "../utils/date.utils.js";
+import { geocodeCity } from "../services/geocoding.service.js";
 
 function normalizeText(value = "") {
   return value
@@ -29,10 +30,14 @@ const knownCityCoordinates = new Map([
   ["london", { lat: 51.5072, lon: -0.1276 }]
 ]);
 
-function cityCoordinates(city) {
+async function cityCoordinates(city) {
   const hostCity = hostCityByName(city);
   if (hostCity?.lat && hostCity?.lon) return { lat: hostCity.lat, lon: hostCity.lon };
-  return knownCityCoordinates.get(normalizeText(city)) || null;
+  const known = knownCityCoordinates.get(normalizeText(city));
+  if (known) return known;
+  const geocoded = await geocodeCity(city);
+  if (geocoded?.lat && geocoded?.lon) return { lat: geocoded.lat, lon: geocoded.lon };
+  return null;
 }
 
 function dateMinusDays(isoDate, days) {
@@ -133,17 +138,19 @@ async function buildFollowTeamRoute({
     }
   }
 
-  const routeSegments = routeFlights.map((flight, index) => {
-    return {
-      id: `${index + 1}-${flight.fromCity}-${flight.toCity}`,
-      fromCity: flight.fromCity,
-      toCity: flight.toCity,
-      fromCoordinates: cityCoordinates(flight.fromCity),
-      toCoordinates: cityCoordinates(flight.toCity),
-      departureDate: flight.departureDate,
-      flight: flight.recommended
-    };
-  });
+  const routeSegments = await Promise.all(
+    routeFlights.map(async (flight, index) => {
+      return {
+        id: `${index + 1}-${flight.fromCity}-${flight.toCity}`,
+        fromCity: flight.fromCity,
+        toCity: flight.toCity,
+        fromCoordinates: await cityCoordinates(flight.fromCity),
+        toCoordinates: await cityCoordinates(flight.toCity),
+        departureDate: flight.departureDate,
+        flight: flight.recommended
+      };
+    })
+  );
 
   return { routeFlights, routeSegments, combinedOffers };
 }
@@ -232,6 +239,7 @@ export async function buildTravelPlan(req, res) {
   let flightError = null;
 
   let followTeamRoute = { routeFlights: [], routeSegments: [], combinedOffers: [] };
+  let routeSegments = [];
   if (mode === "follow_team" && matchPlan.hasExactMatches) {
     followTeamRoute = await buildFollowTeamRoute({
       matches: matchPlan.matches,
@@ -247,7 +255,19 @@ export async function buildTravelPlan(req, res) {
     const firstFlight = followTeamRoute.routeFlights.find((leg) => leg.recommended)?.recommended || null;
     originIata = firstFlight?.originIata || null;
     destinationIata = firstFlight?.destinationIata || null;
+    routeSegments = followTeamRoute.routeSegments;
   } else if (mode !== "stay_origin" && originCity.toLowerCase() !== effectiveDestinationCity.toLowerCase()) {
+    routeSegments = [
+      {
+        id: `1-${originCity}-${effectiveDestinationCity}`,
+        fromCity: originCity,
+        toCity: effectiveDestinationCity,
+        fromCoordinates: await cityCoordinates(originCity),
+        toCoordinates: await cityCoordinates(effectiveDestinationCity),
+        departureDate,
+        flight: null
+      }
+    ];
     try {
       const flightSearch = await getFlexibleFlightOffers({
         originCity,
@@ -353,12 +373,13 @@ export async function buildTravelPlan(req, res) {
     cityImageUrl,
     destinationGuide,
     destinationGuides,
+    routeSegments,
     followTeamRoute: {
       legs: followTeamRoute.routeFlights,
       segments: followTeamRoute.routeSegments
     },
     dataSources: {
-      matches: "Football-Data.org (WC) con fallback TheSportsDB y seed local",
+      matches: "FIFA API con fallback Football-Data.org, TheSportsDB y seed local",
       maps: destinationGuide.dataSources
     },
     costs: {

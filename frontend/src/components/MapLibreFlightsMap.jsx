@@ -139,6 +139,26 @@ export default function MapLibreFlightsMap({ originCity, destinationCity, segmen
       type: "FeatureCollection",
       features: lineFeatures
     });
+    if (map.getSource("route-points")) {
+      const points = [];
+      lineFeatures.forEach((feature) => {
+        const [from, to] = feature.geometry.coordinates;
+        points.push({
+          type: "Feature",
+          properties: { label: feature.properties.fromCity },
+          geometry: { type: "Point", coordinates: from }
+        });
+        points.push({
+          type: "Feature",
+          properties: { label: feature.properties.toCity },
+          geometry: { type: "Point", coordinates: to }
+        });
+      });
+      map.getSource("route-points").setData({
+        type: "FeatureCollection",
+        features: points
+      });
+    }
 
     const bounds = new maplibregl.LngLatBounds();
     lineFeatures.forEach((feature) => {

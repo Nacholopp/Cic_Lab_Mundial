@@ -106,10 +106,80 @@ function fallbackMatches() {
   });
 }
 
+const FIFA_WC_COMPETITION_ID = "17";
+const FIFA_WC_2026_SEASON_ID = "285023";
+
+function hostCityFromFifaStadium(stadium = {}) {
+  const rawCity = stadium?.CityName?.[0]?.Description || "";
+  const rawStadiumName = stadium?.Name?.[0]?.Description || "";
+  const cityCandidate = canonicalCityName(rawCity);
+
+  const byCity = hostCities.find((hostCity) => normalizeText(hostCity.name) === normalizeText(cityCandidate));
+  if (byCity) return byCity;
+
+  return (
+    hostCities.find((hostCity) => normalizeText(rawStadiumName).includes(normalizeText(hostCity.name))) ||
+    hostCities.find((hostCity) => normalizeText(rawStadiumName).includes("new york") && normalizeText(hostCity.name) === "new york/new jersey") ||
+    null
+  );
+}
+
+function normalizeFifaMatch(match) {
+  const hostCity = hostCityFromFifaStadium(match.Stadium || {});
+  const date = match.Date ? new Date(match.Date) : null;
+  if (!date || Number.isNaN(date.getTime())) return null;
+
+  const homeName = match.Home?.TeamName?.[0]?.Description || match.PlaceHolderA || "TBD";
+  const awayName = match.Away?.TeamName?.[0]?.Description || match.PlaceHolderB || "TBD";
+  const venue = hostCity?.stadium || match.Stadium?.Name?.[0]?.Description || null;
+  const city = hostCity?.name || canonicalCityName(match.Stadium?.CityName?.[0]?.Description || "") || null;
+
+  return {
+    id: `fifa-${match.IdMatch}`,
+    homeTeam: homeName,
+    awayTeam: awayName,
+    date: date.toISOString().slice(0, 10),
+    timeUtc: date.toISOString().slice(11, 19),
+    timezone: hostCity?.timezone || null,
+    localKickoff: hostCity?.timezone ? localKickoff(date.toISOString().slice(0, 10), date.toISOString().slice(11, 19), hostCity.timezone) : null,
+    venue,
+    city,
+    stage: match.StageName?.[0]?.Description || match.GroupName?.[0]?.Description || "World Cup 2026",
+    thumbnail: null,
+    source: "FIFA API"
+  };
+}
+
+async function getFifaWorldCupMatches() {
+  const params = new URLSearchParams({
+    idCompetition: FIFA_WC_COMPETITION_ID,
+    idSeason: FIFA_WC_2026_SEASON_ID,
+    count: "220"
+  });
+  const response = await fetch(`https://api.fifa.com/api/v3/calendar/matches?${params.toString()}`);
+  if (!response.ok) {
+    const error = new Error(`FIFA API request failed (${response.status})`);
+    error.statusCode = 502;
+    throw error;
+  }
+  const payload = await response.json();
+  return (payload.Results || []).map(normalizeFifaMatch).filter((match) => match?.date);
+}
+
 export async function getUpcomingMatches() {
   const cacheKey = `sportsdb:worldcup2026:${env.sportsDbLeagueId}`;
   const cached = await getCachedJson(cacheKey);
   if (cached?.matches) return cached.matches;
+
+  try {
+    const fifaMatches = await getFifaWorldCupMatches();
+    if (fifaMatches.length) {
+      await setCachedJson(cacheKey, { matches: fifaMatches }, 60 * 60);
+      return fifaMatches;
+    }
+  } catch {
+    // Fallback to alternative providers below.
+  }
 
   try {
     const footballDataMatches = await getFootballDataWorldCupMatches();

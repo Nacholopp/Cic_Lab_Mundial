@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { ExternalLink, MapPin, Navigation, Star, Utensils } from "lucide-react";
 import { usePlannerStore } from "../store/planner.store.js";
 import { fetchDestinationGuide } from "../services/api.client.js";
-import { fanImage, fifa26Logo, stadiumImage } from "../data/worldCupVisuals.js";
+import { fifa26Logo, stadiumImage } from "../data/worldCupVisuals.js";
 
 export default function Attractions() {
   const { profile, plan } = usePlannerStore();
@@ -143,7 +143,7 @@ export default function Attractions() {
 
                 <aside className="space-y-4">
                   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                    <img src={fanImage} alt={`Aficion en ${cityGuide.city}`} className="h-36 w-full object-cover" />
+                    <img src={cityGuide.cityImageUrl || stadiumImage} alt={`Vista de ${cityGuide.city}`} className="h-36 w-full object-cover" />
                     <div className="p-4">
                       <h2 className="text-lg font-black">Restaurantes y direcciones</h2>
                       <p className="mt-1 text-sm font-medium text-slate-500">
@@ -224,7 +224,7 @@ export default function Attractions() {
 
           <aside className="space-y-4">
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <img src={fanImage} alt="Aficion del Mundial" className="h-36 w-full object-cover" />
+              <img src={guide?.cityImageUrl || stadiumImage} alt={`Vista de ${guide?.city || destinationCity || "la ciudad"}`} className="h-36 w-full object-cover" />
               <div className="p-4">
                 <h2 className="text-lg font-black">Restaurantes y direcciones</h2>
                 <p className="mt-1 text-sm font-medium text-slate-500">
