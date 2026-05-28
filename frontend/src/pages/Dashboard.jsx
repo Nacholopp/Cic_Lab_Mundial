@@ -21,6 +21,14 @@ const matchTitles = {
   follow_team: "Partidos de tu seleccion"
 };
 
+const formatCurrency = (amount, currency = "USD") =>
+  new Intl.NumberFormat("es-ES", {
+    maximumFractionDigits: 0,
+    style: "currency",
+    currency,
+    currencyDisplay: "code"
+  }).format(amount);
+
 export default function Dashboard() {
   const { plan, profile, country } = usePlannerStore();
   const [localTime, setLocalTime] = useState(null);
@@ -48,6 +56,10 @@ export default function Dashboard() {
   }, []);
 
   if (!plan || !profile) return <Navigate to="/" replace />;
+
+  const selectedBudget = profile?.budget ?? plan?.profile?.budget ?? null;
+  const selectedBudgetLabel =
+    selectedBudget == null ? "Sin limite" : formatCurrency(Number(selectedBudget), plan.costs.currency);
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] pb-8 text-slate-950">
@@ -139,7 +151,7 @@ export default function Dashboard() {
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Presupuesto</p>
             <p className="mt-1 text-2xl font-black">
-              {plan.costs.estimatedTotalCost} {plan.costs.currency}
+              {selectedBudgetLabel}
             </p>
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
