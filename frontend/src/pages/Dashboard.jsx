@@ -7,10 +7,11 @@ import MapLibreFlightsMap from "../components/MapLibreFlightsMap.jsx";
 import FlightCard from "../components/FlightCard.jsx";
 import MatchList from "../components/MatchList.jsx";
 import OptionMenu from "../components/OptionMenu.jsx";
+import TeamBadge from "../components/TeamBadge.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
-import { fetchCurrentTime } from "../services/api.client.js";
+import { apiAssetUrl, fetchCurrentTime } from "../services/api.client.js";
 import { fanImage, fifa26Logo, heroImage, stadiumImage } from "../data/worldCupVisuals.js";
 import { formatKickoffForTimezone, formatUtcLabel } from "../utils/matchTime.js";
 import { teamFlagUrl } from "../utils/teamVisuals.js";
@@ -301,11 +302,40 @@ export default function Dashboard() {
                 const leg = followTeamLegs[index] || null;
                 return (
                   <article key={match.id} className="overflow-hidden rounded-md border border-slate-200">
-                    <img
-                      src={match.thumbnail || stadiumImage}
-                      alt={`${match.homeTeam} vs ${match.awayTeam}`}
-                      className="h-36 w-full object-cover"
-                    />
+                    {match.imageUrl ? (
+                      <div className="relative h-40 w-full overflow-hidden bg-slate-900">
+                        <img
+                          src={apiAssetUrl(match.imageUrl)}
+                          alt={`${match.homeTeam} vs ${match.awayTeam}`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3">
+                          <div className="flex min-w-0 items-center justify-between gap-3">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <TeamBadge team={match.homeTeam} width={80} className="h-7 w-10 shrink-0" />
+                              <span className="truncate text-sm font-black text-white">{match.homeTeam}</span>
+                            </span>
+                            <span className="shrink-0 text-[11px] font-black uppercase text-white/75">vs</span>
+                            <span className="flex min-w-0 items-center justify-end gap-2 text-right">
+                              <span className="truncate text-sm font-black text-white">{match.awayTeam}</span>
+                              <TeamBadge team={match.awayTeam} width={80} className="h-7 w-10 shrink-0" />
+                            </span>
+                          </div>
+                        </div>
+                        {match.imageSource && (
+                          <span className="absolute right-2 top-2 rounded bg-black/70 px-2 py-1 text-[10px] font-bold uppercase text-white">
+                            {match.imageSource}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex h-40 w-full items-center justify-center gap-4 bg-slate-950 px-4">
+                        <TeamBadge team={match.homeTeam} width={80} className="h-10 w-14" />
+                        <span className="text-sm font-black uppercase text-white/70">vs</span>
+                        <TeamBadge team={match.awayTeam} width={80} className="h-10 w-14" />
+                      </div>
+                    )}
                     <div className="space-y-2 p-3">
                       <p className="text-sm font-black text-slate-950">
                         <span className="inline-flex items-center gap-1.5">
