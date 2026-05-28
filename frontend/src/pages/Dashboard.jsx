@@ -60,6 +60,15 @@ export default function Dashboard() {
   const selectedBudget = profile?.budget ?? plan?.profile?.budget ?? null;
   const selectedBudgetLabel =
     selectedBudget == null ? "Sin limite" : formatCurrency(Number(selectedBudget), plan.costs.currency);
+  const isOverBudget = plan.costs.budgetStatus === "over_budget";
+  const budgetStatusLabel = isOverBudget
+    ? "Viaje por encima del presupuesto"
+    : "Se ha encontrado un itinerario exitosamente";
+  const overBudgetAmount = Math.max(
+    0,
+    Number(plan.costs.estimatedTotalCost || 0) - Number(selectedBudget || 0)
+  );
+  const overBudgetLabel = formatCurrency(overBudgetAmount, plan.costs.currency);
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] pb-8 text-slate-950">
@@ -156,7 +165,15 @@ export default function Dashboard() {
           </div>
           <div className="rounded-lg border border-white/80 bg-white p-4 shadow-lg">
             <p className="text-xs font-bold uppercase text-slate-500">Estado</p>
-            <p className="mt-1 text-2xl font-black">{plan.costs.budgetStatus}</p>
+            <p className={`mt-1 text-2xl font-black ${isOverBudget ? "text-red-600" : "text-emerald-600"}`}>
+              {budgetStatusLabel}
+            </p>
+            {isOverBudget && overBudgetAmount > 0 && (
+              <div className="budget-overrun-badge mt-4 flex h-28 w-28 flex-col items-center justify-center rounded-full bg-lime-300 text-center text-slate-950 shadow-[0_0_34px_rgba(190,242,100,0.95)] ring-4 ring-lime-100/80">
+                <span className="text-[10px] font-black uppercase leading-none text-slate-700">Se pasa</span>
+                <span className="mt-1 text-xl font-black leading-none">{overBudgetLabel}</span>
+              </div>
+            )}
           </div>
         </section>
 
