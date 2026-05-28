@@ -6,6 +6,7 @@ import HostVenueSelect from "../components/HostVenueSelect.jsx";
 import NewsMagazine from "../components/NewsMagazine.jsx";
 import NewspaperDropdown from "../components/NewspaperDropdown.jsx";
 import TeamCountrySelect from "../components/TeamCountrySelect.jsx";
+import LoadingOverlay from "../components/LoadingOverlay.jsx";
 import { buildPlan } from "../services/api.client.js";
 import { usePlannerStore } from "../store/planner.store.js";
 import { newsCountryOptions } from "../data/newsSources.js";
@@ -45,6 +46,8 @@ const flowOptions = [
     description: "Busca todos los partidos disponibles de esa seleccion."
   }
 ];
+
+const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -118,7 +121,14 @@ export default function Onboarding() {
         maxStops: Number(form.maxStops),
         preferences: []
       };
-      const response = await buildPlan(payload);
+      const [result] = await Promise.all([
+        buildPlan(payload)
+          .then((response) => ({ response }))
+          .catch((requestError) => ({ requestError })),
+        wait(2000)
+      ]);
+      if (result.requestError) throw result.requestError;
+      const response = result.response;
       setCountry(form.country);
       setProfile(response.profile || payload);
       setPlan(response);
@@ -132,6 +142,7 @@ export default function Onboarding() {
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
+      {loading && <LoadingOverlay message="Generando plan" />}
       <header className="sticky top-0 z-50 border-b border-cyan-200/15 bg-[#061b2d]/78 px-4 py-3 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
         <div className="flex w-full items-center gap-3">
           <NewspaperDropdown country={form.country} variant="glass" />
