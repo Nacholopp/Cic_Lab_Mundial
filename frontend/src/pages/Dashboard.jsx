@@ -7,10 +7,11 @@ import MapLibreFlightsMap from "../components/MapLibreFlightsMap.jsx";
 import FlightCard from "../components/FlightCard.jsx";
 import MatchList from "../components/MatchList.jsx";
 import OptionMenu from "../components/OptionMenu.jsx";
+import TeamBadge from "../components/TeamBadge.jsx";
 import Timeline from "../components/Timeline.jsx";
 import TeamShowcase from "../components/TeamShowcase.jsx";
 import { usePlannerStore } from "../store/planner.store.js";
-import { fetchCurrentTime } from "../services/api.client.js";
+import { apiAssetUrl, fetchCurrentTime } from "../services/api.client.js";
 import { fanImage, fifa26Logo, heroImage, stadiumImage } from "../data/worldCupVisuals.js";
 import { formatKickoffForTimezone, formatUtcLabel } from "../utils/matchTime.js";
 import { teamFlagUrl } from "../utils/teamVisuals.js";
@@ -61,9 +62,7 @@ export default function Dashboard() {
   const selectedBudgetLabel =
     selectedBudget == null ? "Sin limite" : formatCurrency(Number(selectedBudget), plan.costs.currency);
   const isOverBudget = plan.costs.budgetStatus === "over_budget";
-  const budgetStatusLabel = isOverBudget
-    ? "Viaje por encima del presupuesto"
-    : "Se ha encontrado un itinerario exitosamente";
+  const budgetStatusLabel = isOverBudget ? "Viaje por encima del presupuesto" : "Viaje encontrado exitosamente";
   const overBudgetAmount = Math.max(
     0,
     Number(plan.costs.estimatedTotalCost || 0) - Number(selectedBudget || 0)
@@ -77,15 +76,15 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-slate-950/55" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/65 to-transparent" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-16">
-          <header className="relative z-10 flex items-center justify-between gap-3">
-            <NewspaperDropdown country={country} />
+          <header className="relative z-20 flex items-center justify-between gap-3 rounded-lg border border-cyan-100/20 bg-gradient-to-r from-[#06111f]/92 via-[#08304b]/88 to-[#0f3d2e]/88 p-3 shadow-[0_18px_45px_rgba(2,6,23,0.38)] backdrop-blur-2xl">
+            <NewspaperDropdown country={country} variant="glass" />
             <div className="flex shrink-0 items-center gap-3">
               <ProfileDropdown profile={profile} />
               <a
                 href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
                 target="_blank"
                 rel="noreferrer"
-                className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg ring-1 ring-white/20 sm:h-20 sm:w-16"
+                className="flex h-16 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-xl shadow-black/35 ring-1 ring-cyan-100/25 sm:h-20 sm:w-16"
                 title="FIFA World Cup 26"
               >
                 <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />
@@ -318,11 +317,40 @@ export default function Dashboard() {
                 const leg = followTeamLegs[index] || null;
                 return (
                   <article key={match.id} className="overflow-hidden rounded-md border border-slate-200">
-                    <img
-                      src={match.thumbnail || stadiumImage}
-                      alt={`${match.homeTeam} vs ${match.awayTeam}`}
-                      className="h-36 w-full object-cover"
-                    />
+                    {match.imageUrl ? (
+                      <div className="relative h-40 w-full overflow-hidden bg-slate-900">
+                        <img
+                          src={apiAssetUrl(match.imageUrl)}
+                          alt={`${match.homeTeam} vs ${match.awayTeam}`}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3">
+                          <div className="flex min-w-0 items-center justify-between gap-3">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <TeamBadge team={match.homeTeam} width={80} className="h-7 w-10 shrink-0" />
+                              <span className="truncate text-sm font-black text-white">{match.homeTeam}</span>
+                            </span>
+                            <span className="shrink-0 text-[11px] font-black uppercase text-white/75">vs</span>
+                            <span className="flex min-w-0 items-center justify-end gap-2 text-right">
+                              <span className="truncate text-sm font-black text-white">{match.awayTeam}</span>
+                              <TeamBadge team={match.awayTeam} width={80} className="h-7 w-10 shrink-0" />
+                            </span>
+                          </div>
+                        </div>
+                        {match.imageSource && (
+                          <span className="absolute right-2 top-2 rounded bg-black/70 px-2 py-1 text-[10px] font-bold uppercase text-white">
+                            {match.imageSource}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex h-40 w-full items-center justify-center gap-4 bg-slate-950 px-4">
+                        <TeamBadge team={match.homeTeam} width={80} className="h-10 w-14" />
+                        <span className="text-sm font-black uppercase text-white/70">vs</span>
+                        <TeamBadge team={match.awayTeam} width={80} className="h-10 w-14" />
+                      </div>
+                    )}
                     <div className="space-y-2 p-3">
                       <p className="text-sm font-black text-slate-950">
                         <span className="inline-flex items-center gap-1.5">

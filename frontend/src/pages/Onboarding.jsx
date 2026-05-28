@@ -143,14 +143,14 @@ export default function Onboarding() {
   return (
     <main className="min-h-screen bg-[#f5f7fb] text-slate-950">
       {loading && <LoadingOverlay message="Generando plan" />}
-      <header className="sticky top-0 z-50 border-b border-cyan-200/15 bg-[#061b2d]/78 px-4 py-3 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-xl">
-        <div className="flex w-full items-center gap-3">
+      <header className="sticky top-0 z-50 border-b border-cyan-100/20 bg-gradient-to-r from-[#06111f]/95 via-[#08304b]/92 to-[#0f3d2e]/92 px-4 py-3 text-white shadow-[0_18px_45px_rgba(2,6,23,0.42)] backdrop-blur-2xl">
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3">
           <NewspaperDropdown country={form.country} variant="glass" />
           <a
             href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026"
             target="_blank"
             rel="noreferrer"
-            className="ml-auto flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-lg shadow-cyan-950/40 ring-1 ring-cyan-100/25 sm:h-16 sm:w-12"
+            className="ml-auto flex h-14 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-black shadow-xl shadow-black/35 ring-1 ring-cyan-100/25 sm:h-16 sm:w-12"
             title="FIFA World Cup 26"
           >
             <img src={fifa26Logo} alt="FIFA World Cup 26" className="h-full w-full object-contain p-1" />

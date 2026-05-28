@@ -5,6 +5,7 @@ import { getUpcomingMatches } from "../services/thesportsdb.service.js";
 import { getWeatherByCity } from "../services/weather.service.js";
 import { getCityImageUrl } from "../services/city-image.service.js";
 import { getDestinationGuide } from "../services/places.service.js";
+import { enrichMatchesWithImages } from "../services/match-image.service.js";
 import { hostCities } from "../data/worldcup2026.data.js";
 import { addDays } from "../utils/date.utils.js";
 import { geocodeCity } from "../services/geocoding.service.js";
@@ -291,7 +292,8 @@ export async function buildTravelPlan(req, res) {
   const relevantMatches = (matchPlan.hasExactMatches ? matchPlan.matches : matchPlan.alternatives).sort((a, b) =>
     `${a.date}T${a.timeUtc || "00:00:00"}`.localeCompare(`${b.date}T${b.timeUtc || "00:00:00"}`)
   );
-  const itinerary = buildItinerary(relevantMatches, originCity, effectiveDestinationCity, mode);
+  const enrichedRelevantMatches = await enrichMatchesWithImages(relevantMatches);
+  const itinerary = buildItinerary(enrichedRelevantMatches, originCity, effectiveDestinationCity, mode);
   const recommendationText = explainRecommendation({
     preferences,
     recommended: rankedFlights.recommended
@@ -322,7 +324,7 @@ export async function buildTravelPlan(req, res) {
 
   let destinationGuides = null;
   if (mode === "follow_team") {
-    const routeCities = [...new Set((relevantMatches || []).map((match) => match.city).filter(Boolean))];
+    const routeCities = [...new Set((enrichedRelevantMatches || []).map((match) => match.city).filter(Boolean))];
     destinationGuides = await Promise.all(
       routeCities.map((city) =>
         getDestinationGuide({
@@ -365,7 +367,7 @@ export async function buildTravelPlan(req, res) {
     watchSpots,
     flights: rankedFlights,
     flightError,
-    matches: relevantMatches,
+    matches: enrichedRelevantMatches,
     itinerary,
     recommendationText,
     weather,

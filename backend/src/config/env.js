@@ -12,7 +12,7 @@ function numberFromEnv(value, fallback) {
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: numberFromEnv(process.env.PORT, 4000),
-  corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:5173,http://127.0.0.1:5173")
+  corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174")
     .split(",")
     .map((origin) => origin.trim()),
   databaseUrl: process.env.DATABASE_URL || "",

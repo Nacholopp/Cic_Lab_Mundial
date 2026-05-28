@@ -40,3 +40,8 @@ export function fetchDestinationGuide(city, originCity = "") {
   if (originCity) params.set("originCity", originCity);
   return request(`/places/destination?${params.toString()}`);
 }
+
+export function apiAssetUrl(url) {
+  if (!url || !url.startsWith("/api/")) return url;
+  return `${API_URL.replace(/\/api$/, "")}${url}`;
+}

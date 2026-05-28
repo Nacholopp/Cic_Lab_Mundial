@@ -27,7 +27,7 @@ export default function NewspaperDropdown({ country, variant = "light" }) {
     <section
       className={`grid h-12 min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)] overflow-hidden rounded-md border shadow-sm backdrop-blur-xl sm:max-w-4xl ${
         glass
-          ? "border-cyan-200/20 bg-cyan-950/40 text-white shadow-cyan-950/30"
+          ? "border-cyan-100/25 bg-[#0b2238]/85 text-white shadow-cyan-950/40 ring-1 ring-white/10"
           : "border-white/30 bg-white/95 text-slate-950"
       }`}
     >
