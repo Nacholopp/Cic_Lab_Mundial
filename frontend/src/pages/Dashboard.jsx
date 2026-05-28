@@ -164,7 +164,7 @@ export default function Dashboard() {
           <MapLibreFlightsMap
             originCity={profile.originCity}
             destinationCity={effectiveDestinationCity}
-            segments={plan?.followTeamRoute?.segments || []}
+            segments={plan?.followTeamRoute?.segments?.length ? plan.followTeamRoute.segments : plan?.routeSegments || []}
           />
           <div className="space-y-4">
             <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">

@@ -1,6 +1,7 @@
 import { env } from "../config/env.js";
 import { getCachedJson, setCachedJson } from "../config/cache.js";
 import { hostCities } from "../data/worldcup2026.data.js";
+import { getCityImageUrl } from "./city-image.service.js";
 
 const fallbackAttractions = {
   "Mexico City": [
@@ -168,9 +169,10 @@ export async function getDestinationGuide({ city, originCity }) {
   const cached = await getCachedJson(cacheKey);
   if (cached) return cached;
 
-  const [restaurants, apiAttractions] = await Promise.all([
+  const [restaurants, apiAttractions, cityImageUrl] = await Promise.all([
     fetchGoogleRestaurants(hostCity.name, hostCity),
-    fetchGeoapifyAttractions(hostCity.name, hostCity)
+    fetchGeoapifyAttractions(hostCity.name, hostCity),
+    getCityImageUrl(hostCity.name).catch(() => null)
   ]);
 
   const guide = {
@@ -195,6 +197,7 @@ export async function getDestinationGuide({ city, originCity }) {
           }
         ],
     attractions: apiAttractions.length ? apiAttractions : fallbackList(hostCity.name),
+    cityImageUrl: cityImageUrl || null,
     dataSources: {
       restaurants: env.googleMapsApiKey ? "Google Places API" : "Google Maps search link",
       attractions: apiAttractions.length ? "Geoapify Places API" : "Curated fallback list",
