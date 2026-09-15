@@ -17,7 +17,7 @@ export const env = {
     .map((origin) => origin.trim()),
   databaseUrl: process.env.DATABASE_URL || "",
   redisUrl: process.env.REDIS_URL || "",
-  jwtSecret: process.env.JWT_SECRET || "replace_me",
+  jwtSecret: process.env.JWT_SECRET || "",
   ignavApiKey: process.env.IGNAV_API_KEY || "",
   ignavBaseUrl: process.env.IGNAV_BASE_URL || "https://ignav.com/api",
   airportsDataUrl:
